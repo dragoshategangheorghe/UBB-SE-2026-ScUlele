@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <IsPackable>false</IsPackable>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="BankApp.Models">
+      <HintPath>..\BankApp.Models\bin\Debug\net8.0\BankApp.Models.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="BankApp.Server">
+      <HintPath>..\BankApp.Server\bin\Debug\net8.0\BankApp.Server.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
