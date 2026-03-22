@@ -7,28 +7,52 @@ namespace BankApp.Server.DataAccess.Implementations
     public class UserCardPreferenceDAO : IUserCardPreferenceDAO
     {
         private readonly AppDbContext _dbContext;
+
         public UserCardPreferenceDAO(AppDbContext dbContext)
         {
-            // TODO: implement user card preference dao logic
-            ;
+            _dbContext = dbContext;
         }
 
         public UserCardPreference? FindByUserId(int userId)
         {
-            // TODO: implement find by user id logic
-            return default !;
+            const string query = @"
+                SELECT UserId, SortOption, UpdatedAt
+                FROM UserCardPreference
+                WHERE UserId = @p0";
+
+            using var reader = _dbContext.ExecuteQuery(query, new object[] { userId });
+            return reader.Read() ? MapPreference(reader) : null;
         }
 
         public bool Upsert(int userId, string sortOption)
         {
-            // TODO: implement upsert logic
-            return default !;
+            const string updateQuery = @"
+                UPDATE UserCardPreference
+                SET SortOption = @p1,
+                    UpdatedAt = GETUTCDATE()
+                WHERE UserId = @p0";
+
+            int updatedRows = _dbContext.ExecuteNonQuery(updateQuery, new object[] { userId, sortOption });
+            if (updatedRows > 0)
+            {
+                return true;
+            }
+
+            const string insertQuery = @"
+                INSERT INTO UserCardPreference (UserId, SortOption)
+                VALUES (@p0, @p1)";
+
+            return _dbContext.ExecuteNonQuery(insertQuery, new object[] { userId, sortOption }) > 0;
         }
 
         private static UserCardPreference MapPreference(IDataReader reader)
         {
-            // TODO: implement map preference logic
-            return default !;
+            return new UserCardPreference
+            {
+                UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                SortOption = reader.GetString(reader.GetOrdinal("SortOption")),
+                UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+            };
         }
     }
 }
