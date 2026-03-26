@@ -23,6 +23,7 @@ namespace BankApp.Client.ViewModels
         private readonly AsyncRelayCommand _unfreezeCommand;
         private readonly AsyncRelayCommand _saveSettingsCommand;
         private readonly RelayCommand _hideSensitiveDetailsCommand;
+
         private bool _isLoading;
         private bool _isStatusOpen;
         private InfoBarSeverity _statusSeverity;
@@ -35,328 +36,386 @@ namespace BankApp.Client.ViewModels
         private string _revealedCvv = string.Empty;
         private string _revealCountdownText = string.Empty;
         private CancellationTokenSource? _autoHideCancellation;
+
         public CardManagementViewModel(ICardApiService cardApiService)
         {
-            // TODO: implement card management view model logic
-            ;
+            _cardApiService = cardApiService;
+
+            Cards = new ObservableCollection<CardSummaryDto>();
+            SortOptions = new List<SelectableOption>
+            {
+                new SelectableOption(CardSortOptions.Custom, "Custom"),
+                new SelectableOption(CardSortOptions.CardholderName, "Cardholder Name"),
+                new SelectableOption(CardSortOptions.ExpiryDate, "Expiry Date"),
+                new SelectableOption(CardSortOptions.Status, "Status")
+            };
+
+            _refreshCommand = new AsyncRelayCommand(LoadAsync);
+            _applySortCommand = new AsyncRelayCommand(ApplySortPreferenceAsync);
+            _freezeCommand = new AsyncRelayCommand(FreezeSelectedCardAsync, () => SelectedCard != null);
+            _unfreezeCommand = new AsyncRelayCommand(UnfreezeSelectedCardAsync, () => SelectedCard != null);
+            _saveSettingsCommand = new AsyncRelayCommand(SaveSettingsAsync, () => SelectedCard != null);
+            _hideSensitiveDetailsCommand = new RelayCommand(HideSensitiveDetails, () => IsSensitiveDetailsVisible);
         }
 
         public ObservableCollection<CardSummaryDto> Cards { get; }
+
         public IReadOnlyList<SelectableOption> SortOptions { get; }
 
-        public AsyncRelayCommand RefreshCommand
-        {
-            get
-            {
-                // TODO: implement refresh command logic
-                return default !;
-            }
-        }
+        public AsyncRelayCommand RefreshCommand => _refreshCommand;
 
-        public AsyncRelayCommand ApplySortCommand
-        {
-            get
-            {
-                // TODO: implement apply sort command logic
-                return default !;
-            }
-        }
+        public AsyncRelayCommand ApplySortCommand => _applySortCommand;
 
-        public AsyncRelayCommand FreezeCommand
-        {
-            get
-            {
-                // TODO: implement freeze command logic
-                return default !;
-            }
-        }
+        public AsyncRelayCommand FreezeCommand => _freezeCommand;
 
-        public AsyncRelayCommand UnfreezeCommand
-        {
-            get
-            {
-                // TODO: implement unfreeze command logic
-                return default !;
-            }
-        }
+        public AsyncRelayCommand UnfreezeCommand => _unfreezeCommand;
 
-        public AsyncRelayCommand SaveSettingsCommand
-        {
-            get
-            {
-                // TODO: implement save settings command logic
-                return default !;
-            }
-        }
+        public AsyncRelayCommand SaveSettingsCommand => _saveSettingsCommand;
 
-        public RelayCommand HideSensitiveDetailsCommand
-        {
-            get
-            {
-                // TODO: update the UI
-                return default !;
-            }
-        }
+        public RelayCommand HideSensitiveDetailsCommand => _hideSensitiveDetailsCommand;
 
         public CardSummaryDto? SelectedCard
         {
-            get
-            {
-                // TODO: implement get logic
-                return default !;
-            }
-
+            get => _selectedCard;
             set
             {
-                // TODO: implement set logic
-                ;
+                if (SetProperty(ref _selectedCard, value))
+                {
+                    HideSensitiveDetails();
+                    SpendingLimitInput = value?.SpendingLimit?.ToString("0.##", CultureInfo.InvariantCulture) ?? string.Empty;
+                    RaiseCardActionStateChanged();
+                }
             }
         }
 
         public string SelectedSortOption
         {
-            get
-            {
-                // TODO: implement get logic
-                return default !;
-            }
-
-            set
-            {
-                // TODO: implement set logic
-                ;
-            }
+            get => _selectedSortOption;
+            set => SetProperty(ref _selectedSortOption, value);
         }
 
         public string SpendingLimitInput
         {
-            get
-            {
-                // TODO: implement get logic
-                return default !;
-            }
-
-            set
-            {
-                // TODO: implement set logic
-                ;
-            }
+            get => _spendingLimitInput;
+            set => SetProperty(ref _spendingLimitInput, value);
         }
 
         public bool IsLoading
         {
-            get
-            {
-                // TODO: implement get logic
-                return default !;
-            }
-
+            get => _isLoading;
             set
             {
-                // TODO: implement set logic
-                ;
+                if (SetProperty(ref _isLoading, value))
+                {
+                    OnPropertyChanged(nameof(LoadingVisibility));
+                }
             }
         }
 
-        public Visibility LoadingVisibility
-        {
-            get
-            {
-                // TODO: implement loading visibility logic
-                return default !;
-            }
-        }
+        public Visibility LoadingVisibility => IsLoading ? Visibility.Visible : Visibility.Collapsed;
 
         public bool IsStatusOpen
         {
-            get
-            {
-                // TODO: implement get logic
-                return default !;
-            }
-
-            set
-            {
-                // TODO: implement set logic
-                ;
-            }
+            get => _isStatusOpen;
+            set => SetProperty(ref _isStatusOpen, value);
         }
 
         public string StatusMessage
         {
-            get
-            {
-                // TODO: implement get logic
-                return default !;
-            }
-
-            set
-            {
-                // TODO: implement set logic
-                ;
-            }
+            get => _statusMessage;
+            set => SetProperty(ref _statusMessage, value);
         }
 
         public InfoBarSeverity StatusSeverity
         {
-            get
-            {
-                // TODO: implement get logic
-                return default !;
-            }
-
-            set
-            {
-                // TODO: implement set logic
-                ;
-            }
+            get => _statusSeverity;
+            set => SetProperty(ref _statusSeverity, value);
         }
 
         public bool IsSensitiveDetailsVisible
         {
-            get
-            {
-                // TODO: implement get logic
-                return default !;
-            }
-
+            get => _isSensitiveDetailsVisible;
             set
             {
-                // TODO: implement set logic
-                ;
+                if (SetProperty(ref _isSensitiveDetailsVisible, value))
+                {
+                    OnPropertyChanged(nameof(SensitiveDetailsVisibility));
+                    _hideSensitiveDetailsCommand.RaiseCanExecuteChanged();
+                }
             }
         }
 
-        public Visibility SensitiveDetailsVisibility
-        {
-            get
-            {
-                // TODO: implement sensitive details visibility logic
-                return default !;
-            }
-        }
+        public Visibility SensitiveDetailsVisibility => IsSensitiveDetailsVisible ? Visibility.Visible : Visibility.Collapsed;
 
         public string RevealedCardNumber
         {
-            get
-            {
-                // TODO: implement get logic
-                return default !;
-            }
-
-            set
-            {
-                // TODO: implement set logic
-                ;
-            }
+            get => _revealedCardNumber;
+            set => SetProperty(ref _revealedCardNumber, value);
         }
 
         public string RevealedCvv
         {
-            get
-            {
-                // TODO: implement get logic
-                return default !;
-            }
-
-            set
-            {
-                // TODO: implement set logic
-                ;
-            }
+            get => _revealedCvv;
+            set => SetProperty(ref _revealedCvv, value);
         }
 
         public string RevealCountdownText
         {
-            get
-            {
-                // TODO: implement get logic
-                return default !;
-            }
-
-            set
-            {
-                // TODO: implement set logic
-                ;
-            }
+            get => _revealCountdownText;
+            set => SetProperty(ref _revealCountdownText, value);
         }
 
         public async Task LoadAsync()
         {
-            // TODO: load load
-            ;
+            try
+            {
+                IsLoading = true;
+                GetCardsResponse? response = await _cardApiService.GetCardsAsync();
+                if (response == null || !response.Success)
+                {
+                    ShowStatus("Failed to load cards.", InfoBarSeverity.Error);
+                    return;
+                }
+
+                int? selectedCardId = SelectedCard?.Id;
+                Cards.Clear();
+                foreach (CardSummaryDto card in response.Cards)
+                {
+                    Cards.Add(card);
+                }
+
+                SelectedSortOption = response.SortOption;
+                SelectedCard = Cards.FirstOrDefault(card => card.Id == selectedCardId) ?? Cards.FirstOrDefault();
+
+                if (Cards.Count == 0)
+                {
+                    ShowStatus("No cards are available for this account.", InfoBarSeverity.Informational);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Failed to load cards: {ex.Message}", InfoBarSeverity.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         public async Task<RevealCardResponse?> RevealSensitiveDetailsAsync(string password, string? otpCode)
         {
-            // TODO: implement reveal sensitive details logic
-            return default !;
+            if (SelectedCard == null)
+            {
+                ShowStatus("Select a card first.", InfoBarSeverity.Warning);
+                return null;
+            }
+
+            try
+            {
+                RevealCardResponse? response = await _cardApiService.RevealCardAsync(SelectedCard.Id, new RevealCardRequest
+                {
+                    Password = password,
+                    OtpCode = otpCode
+                });
+
+                if (response == null)
+                {
+                    ShowStatus("Unable to reveal card details.", InfoBarSeverity.Error);
+                    return null;
+                }
+
+                if (response.Success && response.SensitiveDetails != null)
+                {
+                    RevealedCardNumber = response.SensitiveDetails.CardNumber;
+                    RevealedCvv = response.SensitiveDetails.Cvv;
+                    IsSensitiveDetailsVisible = true;
+                    ShowStatus("Sensitive card details are visible for a limited time.", InfoBarSeverity.Success);
+                    StartAutoHideCountdown(response.RevealDurationSeconds);
+                }
+                else if (response.RequiresOtp)
+                {
+                    ShowStatus(response.Message, InfoBarSeverity.Informational);
+                }
+                else
+                {
+                    ShowStatus(response.Message, InfoBarSeverity.Error);
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Failed to reveal card details: {ex.Message}", InfoBarSeverity.Error);
+                return null;
+            }
         }
 
         private async Task ApplySortPreferenceAsync()
         {
-            // TODO: implement apply sort preference logic
-            ;
+            try
+            {
+                CardCommandResponse? response = await _cardApiService.UpdateSortPreferenceAsync(new UpdateCardSortPreferenceRequest
+                {
+                    SortOption = SelectedSortOption
+                });
+
+                if (response?.Success != true)
+                {
+                    ShowStatus(response?.Message ?? "Failed to update card sort preference.", InfoBarSeverity.Error);
+                    return;
+                }
+
+                await LoadAsync();
+                ShowStatus("Card sort preference updated.", InfoBarSeverity.Success);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Failed to update sort preference: {ex.Message}", InfoBarSeverity.Error);
+            }
         }
 
         private async Task FreezeSelectedCardAsync()
         {
-            // TODO: implement freeze selected card logic
-            ;
+            if (SelectedCard == null)
+            {
+                return;
+            }
+
+            await ExecuteCardUpdateAsync(() => _cardApiService.FreezeCardAsync(SelectedCard.Id));
         }
 
         private async Task UnfreezeSelectedCardAsync()
         {
-            // TODO: implement unfreeze selected card logic
-            ;
+            if (SelectedCard == null)
+            {
+                return;
+            }
+
+            await ExecuteCardUpdateAsync(() => _cardApiService.UnfreezeCardAsync(SelectedCard.Id));
         }
 
         private async Task SaveSettingsAsync()
         {
-            // TODO: implement save settings logic
-            ;
+            if (SelectedCard == null)
+            {
+                return;
+            }
+
+            decimal? spendingLimit = null;
+            if (!string.IsNullOrWhiteSpace(SpendingLimitInput))
+            {
+                if (!decimal.TryParse(SpendingLimitInput, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal parsedLimit))
+                {
+                    ShowStatus("Enter a valid spending limit.", InfoBarSeverity.Warning);
+                    return;
+                }
+
+                spendingLimit = parsedLimit;
+            }
+
+            await ExecuteCardUpdateAsync(() => _cardApiService.UpdateSettingsAsync(SelectedCard.Id, new UpdateCardSettingsRequest
+            {
+                SpendingLimit = spendingLimit,
+                IsOnlinePaymentsEnabled = SelectedCard.IsOnlinePaymentsEnabled,
+                IsContactlessPaymentsEnabled = SelectedCard.IsContactlessPaymentsEnabled
+            }));
         }
 
         private async Task ExecuteCardUpdateAsync(Func<Task<CardCommandResponse?>> operation)
         {
-            // TODO: implement execute card update logic
-            ;
+            try
+            {
+                IsLoading = true;
+                CardCommandResponse? response = await operation();
+                if (response?.Success != true)
+                {
+                    ShowStatus(response?.Message ?? "Card update failed.", InfoBarSeverity.Error);
+                    return;
+                }
+
+                if (response.Card != null)
+                {
+                    ReplaceCard(response.Card);
+                }
+
+                ShowStatus(response.Message, InfoBarSeverity.Success);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Card update failed: {ex.Message}", InfoBarSeverity.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         private void ReplaceCard(CardSummaryDto updatedCard)
         {
-            // TODO: implement replace card logic
-            ;
+            int index = Cards.ToList().FindIndex(card => card.Id == updatedCard.Id);
+            if (index >= 0)
+            {
+                Cards[index] = updatedCard;
+                SelectedCard = Cards[index];
+                return;
+            }
+
+            Cards.Add(updatedCard);
+            SelectedCard = updatedCard;
         }
 
         private void StartAutoHideCountdown(int durationSeconds)
         {
-            // TODO: update the UI
-            ;
+            _autoHideCancellation?.Cancel();
+            _autoHideCancellation = new CancellationTokenSource();
+            CancellationToken cancellationToken = _autoHideCancellation.Token;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    for (int remainingSeconds = durationSeconds; remainingSeconds > 0; remainingSeconds--)
+                    {
+                        RunOnUiThread(() => RevealCountdownText = $"Auto-hide in {remainingSeconds}s");
+                        await Task.Delay(1000, cancellationToken);
+                    }
+
+                    RunOnUiThread(HideSensitiveDetails);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Ignored because a new reveal action replaced the countdown.
+                }
+            }, cancellationToken);
         }
 
         private void HideSensitiveDetails()
         {
-            // TODO: update the UI
-            ;
+            _autoHideCancellation?.Cancel();
+            RevealedCardNumber = string.Empty;
+            RevealedCvv = string.Empty;
+            RevealCountdownText = string.Empty;
+            IsSensitiveDetailsVisible = false;
         }
 
         private void ShowStatus(string message, InfoBarSeverity severity)
         {
-            // TODO: update the UI
-            ;
+            StatusMessage = message;
+            StatusSeverity = severity;
+            IsStatusOpen = !string.IsNullOrWhiteSpace(message);
         }
 
         private void RaiseCardActionStateChanged()
         {
-            // TODO: implement raise card action state logic
-            ;
+            _freezeCommand.RaiseCanExecuteChanged();
+            _unfreezeCommand.RaiseCanExecuteChanged();
+            _saveSettingsCommand.RaiseCanExecuteChanged();
         }
 
         public override void Dispose()
         {
-            // TODO: implement dispose logic
-            ;
+            _autoHideCancellation?.Cancel();
+            _autoHideCancellation?.Dispose();
         }
     }
 
@@ -364,11 +423,12 @@ namespace BankApp.Client.ViewModels
     {
         public SelectableOption(string value, string label)
         {
-            // TODO: implement selectable option logic
-            ;
+            Value = value;
+            Label = label;
         }
 
         public string Value { get; }
+
         public string Label { get; }
     }
 }
