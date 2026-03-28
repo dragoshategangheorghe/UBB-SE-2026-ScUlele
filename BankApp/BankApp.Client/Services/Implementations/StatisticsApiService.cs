@@ -8,34 +8,30 @@ namespace BankApp.Client.Services.Implementations
     public class StatisticsApiService : IStatisticsApiService
     {
         private readonly ApiService _apiService;
+
         public StatisticsApiService(ApiService apiService)
         {
-            // TODO: implement statistics api service logic
-            ;
+            _apiService = apiService;
         }
 
         public Task<SpendingByCategoryResponse?> GetSpendingByCategoryAsync()
         {
-            // TODO: load spending by category
-            return default !;
+            return _apiService.GetAsync<SpendingByCategoryResponse>("api/statistics/spending-by-category");
         }
 
         public Task<IncomeVsExpensesResponse?> GetIncomeVsExpensesAsync()
         {
-            // TODO: load income vs expenses
-            return default !;
+            return _apiService.GetAsync<IncomeVsExpensesResponse>("api/statistics/income-vs-expenses");
         }
 
         public Task<BalanceTrendsResponse?> GetBalanceTrendsAsync()
         {
-            // TODO: load balance trends
-            return default !;
+            return _apiService.GetAsync<BalanceTrendsResponse>("api/statistics/balance-trends");
         }
 
         public Task<TopRecipientsResponse?> GetTopRecipientsAsync()
         {
-            // TODO: load top recipients
-            return default !;
+            return _apiService.GetAsync<TopRecipientsResponse>("api/statistics/top-recipients");
         }
     }
 }
