@@ -1,12 +1,4 @@
-namespace BankApp.Models.Enums
+﻿namespace BankApp.Models.Enums
 {
-    public enum ProfileState
-    {
-        Idle,
-        Loading,
-        Success,
-        UpdateSuccess,
-        PasswordChanged,
-        Error
-    }
+    public enum ProfileState { Idle, Loading, Success, UpdateSuccess, PasswordChanged, Error }
 }

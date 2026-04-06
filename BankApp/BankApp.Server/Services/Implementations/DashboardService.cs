@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using BankApp.Models.Entities;
 using BankApp.Server.Services.Interfaces;
 using BankApp.Server.Repositories.Interfaces;
@@ -14,16 +15,27 @@ namespace BankApp.Server.Services.Implementations
     {
         private readonly IDashboardRepository _dashboardRepository;
         private readonly IUserRepository _userRepository;
+
         public DashboardService(IDashboardRepository dashboardRepository, IUserRepository userRepository)
         {
-            // TODO: implement dashboard service logic
-            ;
+            _dashboardRepository = dashboardRepository;
+            _userRepository = userRepository;
         }
 
         public DashboardResponse GetDashboardData(int id)
         {
-            // TODO: load dashboard data
-            return default !;
+            User user = _userRepository.FindById(id);
+            /// if there is no ID returns null, otherwise returns the dashboard data for the user with the given ID
+            if (user == null)
+            {
+                return null;
+            }
+            return new DashboardResponse { 
+                CurrentUser = user,
+                Cards = _dashboardRepository.GetCardsByUser(id),
+                RecentTransactions = _dashboardRepository.GetRecentTransactions(id, 10),
+                UnreadNotificationCount = _dashboardRepository.GetUnreadNotificationCount(id)
+                };
         }
     }
 }

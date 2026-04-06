@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using BankApp.Server.Services.Interfaces;
 using BankApp.Models.DTOs.Profile;
 using BankApp.Models.Entities;
@@ -10,88 +10,148 @@ namespace BankApp.Server.Controllers
     public class ProfileController : ControllerBase
     {
         private readonly IProfileService _profileService;
-        public ProfileController(IProfileService profileService)
-        {
-            // TODO: implement profile controller logic
-            ;
-        }
-
-        private int GetAuthenticatedUserId()
-        {
-            // TODO: load authenticated user id
-            return default !;
-        }
+        public ProfileController(IProfileService profileService) { _profileService = profileService; }
+        private int GetAuthenticatedUserId() => (int)HttpContext.Items["UserId"]!;
 
         // GET: api/profile
         [HttpGet]
         public IActionResult GetProfile()
         {
-            // TODO: load profile
-            return default !;
+            int userId = GetAuthenticatedUserId();
+
+            User? user = _profileService.GetUserById(userId);
+            if (user == null)
+            {
+                return NotFound(new GetProfileResponse(false, "User not found."));
+            }
+
+            return Ok(new GetProfileResponse(true, "Successfully retrieved profile information.", user));
         }
 
         // PUT: api/profile
         [HttpPut]
         public IActionResult UpdateProfile([FromBody] UpdateProfileRequest request)
         {
-            // TODO: implement update profile logic
-            return default !;
+            int userId = GetAuthenticatedUserId();
+            request.UserId = userId; // override whatever the client sent
+
+            UpdateProfileResponse response = _profileService.UpdatePersonalInfo(request);
+
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
         }
 
         // PUT: api/profile/password
         [HttpPut("password")]
         public IActionResult ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            // TODO: implement authentication logic
-            return default !;
+            int userId = GetAuthenticatedUserId();
+            request.UserId = userId; // override whatever the client sent
+
+            ChangePasswordResponse response = _profileService.ChangePassword(request);
+
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
         }
 
         // GET: api/profile/oauthlinks
         [HttpGet("oauthlinks")]
         public IActionResult GetOAuthLinks()
         {
-            // TODO: load oauth links
-            return default !;
+            int userId = GetAuthenticatedUserId();
+
+            List<OAuthLink> links = _profileService.GetOAuthLinks(userId);
+
+            if (links.Count == 0)
+            {
+                return NotFound(links);
+            }
+
+            return Ok(links);
         }
 
         // GET: api/profile/notifications/preferences
         [HttpGet("notifications/preferences")]
         public IActionResult GetNotificationPreferences()
         {
-            // TODO: load notification preferences
-            return default !;
+            int userId = GetAuthenticatedUserId();
+
+            List<NotificationPreference> prefs = _profileService.GetNotificationPreferences(userId);
+
+            if (prefs.Count == 0)
+            {
+                return NotFound(prefs);
+            }
+
+            return Ok(prefs);
         }
 
         // PUT: api/profile/notifications/preferences
         [HttpPut("notifications/preferences")]
         public IActionResult UpdateNotificationPreferences([FromBody] List<NotificationPreference> prefs)
         {
-            // TODO: implement update notification preferences logic
-            return default !;
+            int userId = GetAuthenticatedUserId();
+
+            bool success = _profileService.UpdateNotificationPreferences(userId, prefs);
+
+            if (!success)
+            {
+                return BadRequest(false);
+            }
+
+            return Ok(true);
         }
 
         // POST: api/profile/verify-password
         [HttpPost("verify-password")]
         public IActionResult VerifyPassword([FromBody] string password)
         {
-            // TODO: validate password
-            return default !;
+            int userId = GetAuthenticatedUserId();
+
+            bool success = _profileService.VerifyPassword(userId, password);
+
+            if (!success)
+            {
+                return BadRequest(false);
+            }
+
+            return Ok(true);
         }
 
         // PUT: api/profile/2fa/enable
         [HttpPut("2fa/enable")]
         public IActionResult Enable2FA([FromBody] Enable2FARequest request)
         {
-            // TODO: implement enable2 fa logic
-            return default !;
+            int userId = GetAuthenticatedUserId();
+
+            bool success = _profileService.Enable2FA(userId, request.Method);
+
+            if (!success)
+                return BadRequest(new Toggle2FAResponse { Success = false });
+
+            return Ok(new Toggle2FAResponse { Success = true });
         }
 
         // PUT: api/profile/2fa/disable
         [HttpPut("2fa/disable")]
         public IActionResult Disable2FA()
         {
-            // TODO: implement disable2 fa logic
-            return default !;
+            int userId = GetAuthenticatedUserId();
+
+            bool success = _profileService.Disable2FA(userId);
+
+            if (!success)
+                return BadRequest(new Toggle2FAResponse { Success = false });
+
+            return Ok(new Toggle2FAResponse { Success = true });
         }
     }
 }

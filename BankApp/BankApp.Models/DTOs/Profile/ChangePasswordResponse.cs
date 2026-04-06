@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,16 +11,12 @@ namespace BankApp.Models.DTOs.Profile
         public bool Success { get; set; }
         public string? Message { get; set; }
 
-        public ChangePasswordResponse()
-        {
-            // TODO: implement authentication logic
-            ;
-        }
+        public ChangePasswordResponse() {  }
 
         public ChangePasswordResponse(bool success, string? message)
         {
-            // TODO: implement authentication logic
-            ;
+            Success = success;
+            Message = message;
         }
     }
 }

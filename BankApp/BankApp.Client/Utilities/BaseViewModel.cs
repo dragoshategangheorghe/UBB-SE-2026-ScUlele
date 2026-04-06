@@ -9,35 +9,45 @@ namespace BankApp.Client.Utilities
     public abstract class BaseViewModel : INotifyPropertyChanged
     {
         private readonly SynchronizationContext? _synchronizationContext;
+
         protected BaseViewModel()
         {
-            // TODO: implement base view model logic
-            ;
+            _synchronizationContext = SynchronizationContext.Current;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
+
         protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = "")
         {
-            // TODO: implement set property logic
-            return default !;
+            if (EqualityComparer<T>.Default.Equals(storage, value))
+            {
+                return false;
+            }
+
+            storage = value;
+            OnPropertyChanged(propertyName);
+            return true;
         }
 
         public void OnPropertyChanged([CallerMemberName] string propertyName = "")
         {
-            // TODO: implement on property logic
-            ;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         protected void SetState<T>(Observable<T> observable, T value)
         {
-            // TODO: implement set state logic
-            ;
+            observable.SetValue(value);
         }
 
         protected void RunOnUiThread(Action action)
         {
-            // TODO: implement run on ui thread logic
-            ;
+            if (_synchronizationContext == null)
+            {
+                action();
+                return;
+            }
+
+            _synchronizationContext.Post(_ => action(), null);
         }
 
         public abstract void Dispose();

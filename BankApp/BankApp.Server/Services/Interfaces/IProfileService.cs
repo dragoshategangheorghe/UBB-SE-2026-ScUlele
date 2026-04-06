@@ -1,7 +1,6 @@
-using BankApp.Models.DTOs.Profile;
+﻿using BankApp.Models.DTOs.Profile;
 using BankApp.Models.Entities;
 using BankApp.Models.Enums;
-
 namespace BankApp.Server.Services.Interfaces
 {
     public interface IProfileService

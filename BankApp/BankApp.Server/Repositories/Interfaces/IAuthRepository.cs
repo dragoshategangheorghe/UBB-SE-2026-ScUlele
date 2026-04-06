@@ -1,5 +1,4 @@
-using BankApp.Models.Entities;
-
+﻿using BankApp.Models.Entities;
 namespace BankApp.Server.Repositories.Interfaces
 {
     public interface IAuthRepository
@@ -15,6 +14,7 @@ namespace BankApp.Server.Repositories.Interfaces
         void InvalidateAllSessions(int userId);
         User? FindUserById(int id);
         bool UpdatePassword(int userId, string newPasswordHash);
+
         // Additional methods for session management (could be removed if not needed)
         List<Session> FindSessionsByUserId(int userId);
         bool UpdateSessionToken(int sessionId);

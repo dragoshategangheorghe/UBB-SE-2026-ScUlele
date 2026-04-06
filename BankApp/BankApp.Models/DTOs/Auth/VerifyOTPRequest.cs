@@ -1,4 +1,4 @@
-namespace BankApp.Models.DTOs.Auth
+﻿namespace BankApp.Models.DTOs.Auth
 {
     public class VerifyOTPRequest
     {

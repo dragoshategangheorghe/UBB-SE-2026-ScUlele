@@ -1,4 +1,4 @@
-using BankApp.Models.Entities;
+﻿using BankApp.Models.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,24 +11,22 @@ namespace BankApp.Models.DTOs.Profile
     {
         public bool Success { get; set; }
         public string Message { get; set; }
+
         public ProfileInfo? ProfileInfo { get; set; }
 
-        public GetProfileResponse()
-        {
-            // TODO: load profile response
-            ;
-        }
+        public GetProfileResponse() { }
 
         public GetProfileResponse(bool success, string message)
         {
-            // TODO: load profile response
-            ;
+            Success = success;
+            Message = message;
         }
 
         public GetProfileResponse(bool success, string message, User user)
         {
-            // TODO: load profile response
-            ;
+            Success = success;
+            Message = message;
+            ProfileInfo = new ProfileInfo(user);
         }
     }
 }

@@ -1,5 +1,4 @@
-using BankApp.Models.Entities;
-
+﻿using BankApp.Models.Entities;
 namespace BankApp.Server.Repositories.Interfaces
 {
     public interface IUserRepository

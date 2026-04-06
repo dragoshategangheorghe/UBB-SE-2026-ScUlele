@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Net.Mail;
 
 namespace BankApp.Server.Utilities
@@ -7,32 +7,49 @@ namespace BankApp.Server.Utilities
     {
         public static bool IsValidEmail(string email)
         {
-            // TODO: implement is valid email logic
-            return default !;
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return false;
+            }
+
+            email = email.Trim().ToLower();
+             
+            try
+            {
+                MailAddress addr = new MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public static bool IsStrongPassword(string password)
         {
-            // TODO: implement authentication logic
-            return default !;
+            if (string.IsNullOrWhiteSpace(password)) { return false; }
+            return password.Length >= 8
+                && password.Any(char.IsUpper)
+                && password.Any(char.IsLower)
+                && password.Any(char.IsDigit)
+                && password.Any(ch => !char.IsLetterOrDigit(ch));
         }
 
         public static bool IsValidOTP(string otp)
         {
-            // TODO: implement authentication logic
-            return default !;
+            return !string.IsNullOrWhiteSpace(otp) && otp.Length == 6 && otp.All(char.IsDigit);
         }
 
         public static bool PasswordsMatch(string a, string b)
         {
-            // TODO: implement authentication logic
-            return default !;
+            if (a == null || b == null) return false;
+            return a == b;
         }
 
         public static bool IsValidPhoneNumber(string phone)
         {
-            // TODO: implement is valid phone number logic
-            return default !;
+            if (string.IsNullOrWhiteSpace(phone)) return false;
+            return Regex.IsMatch(phone, @"^\+?[\d\s\-().]{7,15}$");
         }
     }
 }

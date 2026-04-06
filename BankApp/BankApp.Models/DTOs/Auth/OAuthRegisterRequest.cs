@@ -1,4 +1,4 @@
-public class OAuthRegisterRequest
+﻿public class OAuthRegisterRequest
 {
     public string Provider { get; set; } = string.Empty;
     public string ProviderToken { get; set; } = string.Empty;

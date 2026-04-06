@@ -1,6 +1,5 @@
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using System.Data;
-
 namespace BankApp.Server.DataAccess
 {
     public class AppDbContext : IDbContext
@@ -8,64 +7,108 @@ namespace BankApp.Server.DataAccess
         private readonly string _connectionString;
         private SqlConnection? _connection;
         private SqlTransaction? _currentTransaction;
+
         public AppDbContext(string connectionString)
         {
-            // TODO: implement app db context logic
-            ;
+            _connectionString = connectionString;
         }
 
         public SqlConnection GetConnection()
         {
-            // TODO: load connection
-            return default !;
+            if (_connection == null || _connection.State == ConnectionState.Closed)
+            {
+                try
+                {
+                    _connection = new SqlConnection(_connectionString);
+                    _connection.Open();
+                }
+                catch (SqlException e)
+                {
+                    throw new Exception($"Failed to connect to the database: {e.Message}", e);
+                }
+            }
+            return _connection;
         }
 
         public SqlTransaction BeginTransaction()
         {
-            // TODO: implement begin transaction logic
-            return default !;
+            SqlConnection conn = GetConnection();
+            try
+            {
+                _currentTransaction = conn.BeginTransaction();
+            }
+            catch (SqlException e)
+            {
+                throw new Exception($"Failed to begin transaction: {e.Message}", e);
+            }
+            return _currentTransaction;
         }
 
         public void CommitTransaction()
         {
-            // TODO: implement commit transaction logic
-            ;
+            if (_currentTransaction != null)
+            {
+                _currentTransaction.Commit();
+                _currentTransaction = null;
+            }
         }
 
         public void RollbackTransaction()
         {
-            // TODO: implement rollback transaction logic
-            ;
+            if (_currentTransaction != null)
+            {
+                _currentTransaction.Rollback();
+                _currentTransaction = null;
+            }
         }
 
         public SqlTransaction? GetCurrentTransaction()
         {
-            // TODO: load current transaction
-            return default !;
+            return _currentTransaction;
         }
 
         private void AddParameters(SqlCommand cmd, object[] parameters)
         {
-            // TODO: implement add parameters logic
-            ;
+            if (parameters == null)
+            {
+                return;
+            }
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                cmd.Parameters.AddWithValue($"@p{i}", parameters[i] ?? DBNull.Value);
+            }
         }
 
         public IDataReader ExecuteQuery(string sqlStatement, object[] parameters)
         {
-            // TODO: implement execute query logic
-            return default !;
+            var conn = GetConnection();
+            var cmd = new SqlCommand(sqlStatement, conn, _currentTransaction);
+            AddParameters(cmd, parameters);
+            return cmd.ExecuteReader(); // returns rows back
         }
 
         public int ExecuteNonQuery(string sqlStatement, object[] parameters)
         {
-            // TODO: implement execute non query logic
-            return default !;
+            var conn = GetConnection();
+            using var cmd = new SqlCommand(sqlStatement, conn, _currentTransaction); // disposes the command when done with it
+            AddParameters(cmd, parameters);
+            return cmd.ExecuteNonQuery(); // how many rows are affected
         }
 
         public void Dispose()
         {
-            // TODO: implement dispose logic
-            ;
+            if (_currentTransaction != null)
+            {
+                _currentTransaction.Dispose();
+            }
+
+            if (_connection != null)
+            {
+                if (_connection.State != ConnectionState.Closed)
+                    _connection.Close();
+                _connection.Dispose();
+                _connection = null;
+            }
         }
     }
 }

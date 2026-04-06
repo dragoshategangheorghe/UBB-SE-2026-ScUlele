@@ -1,4 +1,5 @@
-namespace BankApp.Server.Services.Infrastructure.Interfaces;
+﻿namespace BankApp.Server.Services.Infrastructure.Interfaces;
+
 public interface IOTPService
 {
     string GenerateTOTP(int userId);
@@ -7,4 +8,5 @@ public interface IOTPService
     bool VerifySMSOTP(int userId, string code);
     bool IsExpired(DateTime expiredAt);
     void InvalidateOTP(int userId);
+
 }

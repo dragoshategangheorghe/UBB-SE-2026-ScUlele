@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml.Controls;
+﻿using Microsoft.UI.Xaml.Controls;
 
 namespace BankApp.Client.Master
 {
@@ -6,40 +6,36 @@ namespace BankApp.Client.Master
     {
         private Frame? _frame;
         private Frame? _contentFrame;
+
         public void SetFrame(Frame frame)
         {
-            // TODO: implement set frame logic
-            ;
+            _frame = frame;
         }
 
         public void SetContentFrame(Frame frame)
         {
-            // TODO: implement set content frame logic
-            ;
+            _contentFrame = frame;
         }
 
         public void NavigateTo<TPage>()
         {
-            // TODO: implement navigate to logic
-            ;
+            _frame?.Navigate(typeof(TPage));
         }
 
         public void NavigateToContent<TPage>()
         {
-            // TODO: implement navigate to content logic
-            ;
+            _contentFrame?.Navigate(typeof(TPage));
         }
 
         public void GoBack()
         {
-            // TODO: implement go back logic
-            ;
+            if (CanGoBack())
+                _frame?.GoBack();
         }
 
         public bool CanGoBack()
         {
-            // TODO: implement can go back logic
-            return default !;
+            return _frame?.CanGoBack ?? false;
         }
     }
 }

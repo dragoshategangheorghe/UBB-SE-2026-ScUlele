@@ -1,4 +1,5 @@
-namespace BankApp.Server.Services.Infrastructure.Interfaces;
+﻿namespace BankApp.Server.Services.Infrastructure.Interfaces;
+
 public interface IEmailService
 {
     void sendPasswordResetLink(string email, string token);

@@ -1,4 +1,4 @@
-using BankApp.Models.Enums;
+﻿using BankApp.Models.Enums;
 
 namespace BankApp.Models.Entities
 {

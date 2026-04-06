@@ -1,40 +1,40 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace BankApp.Client.Utilities
 {
     public class Observable<T>
     {
         public T Value { get; private set; }
-
         private List<Observer<T>> _observers;
+
         public Observable(T value)
         {
-            // TODO: implement observable logic
-            ;
+            _observers = new List<Observer<T>>();
+            Value = value;
         }
 
         public void SetValue(T value)
         {
-            // TODO: implement set value logic
-            ;
+            Value = value;
+            NotifyObservers();
         }
 
         public void AddObserver(Observer<T> observer)
         {
-            // TODO: implement add observer logic
-            ;
+            _observers.Add(observer);
         }
 
         public void RemoveObserver(Observer<T> observer)
         {
-            // TODO: implement remove observer logic
-            ;
+            _observers.Remove(observer);
         }
 
         private void NotifyObservers()
         {
-            // TODO: implement notify observers logic
-            ;
+            foreach (var observer in _observers)
+            {
+                observer.Update(Value);
+            }
         }
     }
 }

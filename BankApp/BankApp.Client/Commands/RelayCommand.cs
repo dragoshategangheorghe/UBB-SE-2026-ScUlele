@@ -8,29 +8,28 @@ namespace BankApp.Client.Commands
     {
         private readonly Action _execute;
         private readonly Func<bool>? _canExecute;
+
         public RelayCommand(Action execute, Func<bool>? canExecute = null)
         {
-            // TODO: implement relay command logic
-            ;
+            _execute = execute;
+            _canExecute = canExecute;
         }
 
         public event EventHandler? CanExecuteChanged;
+
         public bool CanExecute(object? parameter)
         {
-            // TODO: implement can execute logic
-            return default !;
+            return _canExecute?.Invoke() ?? true;
         }
 
         public void Execute(object? parameter)
         {
-            // TODO: implement execute logic
-            ;
+            _execute();
         }
 
         public void RaiseCanExecuteChanged()
         {
-            // TODO: implement raise can execute logic
-            ;
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -39,29 +38,43 @@ namespace BankApp.Client.Commands
         private readonly Func<Task> _execute;
         private readonly Func<bool>? _canExecute;
         private bool _isRunning;
+
         public AsyncRelayCommand(Func<Task> execute, Func<bool>? canExecute = null)
         {
-            // TODO: implement async relay command logic
-            ;
+            _execute = execute;
+            _canExecute = canExecute;
         }
 
         public event EventHandler? CanExecuteChanged;
+
         public bool CanExecute(object? parameter)
         {
-            // TODO: implement can execute logic
-            return default !;
+            return !_isRunning && (_canExecute?.Invoke() ?? true);
         }
 
         public async void Execute(object? parameter)
         {
-            // TODO: implement execute logic
-            ;
+            if (!CanExecute(parameter))
+            {
+                return;
+            }
+
+            try
+            {
+                _isRunning = true;
+                RaiseCanExecuteChanged();
+                await _execute();
+            }
+            finally
+            {
+                _isRunning = false;
+                RaiseCanExecuteChanged();
+            }
         }
 
         public void RaiseCanExecuteChanged()
         {
-            // TODO: implement raise can execute logic
-            ;
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

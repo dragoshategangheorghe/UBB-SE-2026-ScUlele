@@ -1,5 +1,4 @@
-using BankApp.Models.DTOs.Auth;
-
+﻿using BankApp.Models.DTOs.Auth;
 namespace BankApp.Server.Services.Interfaces
 {
     public interface IAuthService

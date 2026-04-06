@@ -1,10 +1,6 @@
-namespace BankApp.Models.Enums;
+﻿namespace BankApp.Models.Enums;
+
 public enum NotificationType
 {
-    Payment,
-    OutboundTransfer,
-    InboundTransfer,
-    LowBalance,
-    DuePayment,
-    SuspiciousActivity
+    Payment, OutboundTransfer, InboundTransfer, LowBalance, DuePayment, SuspiciousActivity
 }

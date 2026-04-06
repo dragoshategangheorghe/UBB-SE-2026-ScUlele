@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,16 +11,11 @@ namespace BankApp.Models.DTOs.Profile
         public bool Success { get; set; }
         public string? Message { get; set; }
 
-        public UpdateProfileResponse()
-        {
-            // TODO: implement update profile response logic
-            ;
-        }
-
+        public UpdateProfileResponse() { }
         public UpdateProfileResponse(bool success, string? message)
         {
-            // TODO: implement update profile response logic
-            ;
+            Success = success;
+            Message = message;
         }
     }
 }

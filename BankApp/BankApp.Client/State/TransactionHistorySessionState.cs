@@ -6,12 +6,13 @@ namespace BankApp.Client.State
     public class TransactionHistorySessionState : ITransactionHistorySessionState
     {
         public TransactionHistoryRequest? CurrentRequest { get; set; }
+
         public int? SelectedTransactionId { get; set; }
 
         public void Clear()
         {
-            // TODO: implement clear logic
-            ;
+            CurrentRequest = null;
+            SelectedTransactionId = null;
         }
     }
 }

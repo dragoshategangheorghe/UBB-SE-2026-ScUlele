@@ -1,6 +1,5 @@
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using System.Data;
-
 namespace BankApp.Server.DataAccess
 {
     public interface IDbContext : IDisposable

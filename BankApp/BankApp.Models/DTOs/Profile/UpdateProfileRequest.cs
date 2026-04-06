@@ -1,4 +1,4 @@
-namespace BankApp.Models.DTOs.Profile
+﻿namespace BankApp.Models.DTOs.Profile
 {
     public class UpdateProfileRequest
     {
@@ -6,16 +6,13 @@ namespace BankApp.Models.DTOs.Profile
         public string? PhoneNumber { get; set; }
         public string? Address { get; set; }
 
-        public UpdateProfileRequest()
-        {
-            // TODO: implement update profile request logic
-            ;
-        }
+        public UpdateProfileRequest() { }
 
         public UpdateProfileRequest(int? userId, string? phoneNumber, string? address)
         {
-            // TODO: implement update profile request logic
-            ;
+            UserId = userId;
+            PhoneNumber = phoneNumber;
+            Address = address;
         }
     }
 }

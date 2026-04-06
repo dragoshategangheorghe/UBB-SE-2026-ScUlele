@@ -1,4 +1,4 @@
-using BankApp.Server.Services.Infrastructure.Interfaces;
+﻿using BankApp.Server.Services.Infrastructure.Interfaces;
 
 namespace BankApp.Server.Services.Infrastructure.Implementations
 {
@@ -6,14 +6,12 @@ namespace BankApp.Server.Services.Infrastructure.Implementations
     {
         public string GetHash(string input)
         {
-            // TODO: load hash
-            return default !;
+            return BCrypt.Net.BCrypt.HashPassword(input);
         }
 
         public bool Verify(string input, string hash)
         {
-            // TODO: implement verify logic
-            return default !;
+            return BCrypt.Net.BCrypt.Verify(input, hash);
         }
     }
 }

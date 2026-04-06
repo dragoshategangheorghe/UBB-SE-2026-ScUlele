@@ -1,6 +1,7 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 
 namespace BankApp.Server.Services.Infrastructure.Interfaces;
+
 public interface IJWTService
 {
     string GenerateToken(int userId);

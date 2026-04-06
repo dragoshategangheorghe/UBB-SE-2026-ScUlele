@@ -1,4 +1,4 @@
-namespace BankApp.Models.Entities
+﻿namespace BankApp.Models.Entities
 {
     public class Category
     {

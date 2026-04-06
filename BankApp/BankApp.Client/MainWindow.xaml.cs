@@ -7,8 +7,11 @@ namespace BankApp.Client
     {
         public MainWindow()
         {
-            // TODO: implement main window logic
             this.InitializeComponent();
+            App.NavigationService.SetFrame(RootFrame);
+
+            // Start on the login page
+            App.NavigationService.NavigateTo<LoginView>();
         }
     }
 }

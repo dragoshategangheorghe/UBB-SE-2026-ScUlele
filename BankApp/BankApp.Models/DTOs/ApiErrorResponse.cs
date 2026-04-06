@@ -1,4 +1,4 @@
-namespace BankApp.Models.DTOs
+﻿namespace BankApp.Models.DTOs
 {
     public class ApiErrorResponse
     {

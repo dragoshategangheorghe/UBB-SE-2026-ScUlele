@@ -1,11 +1,10 @@
-namespace BankApp.Client.Utilities
+﻿namespace BankApp.Client.Utilities
 {
     public abstract class BaseView<T> : Observer<T>
     {
         public void Update(T value)
         {
-            // TODO: implement update logic
-            ;
+            OnStateChanged(value);
         }
 
         public abstract void OnStateChanged(T state);

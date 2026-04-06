@@ -4,40 +4,36 @@ using BankApp.Server.DataAccess.Interfaces;
 
 namespace BankApp.Server.Repositories.Implementations
 {
-    public class DashboardRepository : IDashboardRepository
-    {
-        private readonly IAccountDAO _accountDAO;
-        private readonly ICardDAO _cardDAO;
-        private readonly ITransactionDAO _transactionDAO;
-        private readonly INotificationDAO _notificationDAO;
-        public DashboardRepository(IAccountDAO accountDAO, ICardDAO cardDAO, ITransactionDAO transactionDAO, INotificationDAO notificationDAO)
-        {
-            // TODO: implement dashboard repository logic
-            ;
-        }
+	public class DashboardRepository : IDashboardRepository
+	{
+		private readonly IAccountDAO _accountDAO;
+		private readonly ICardDAO _cardDAO;
+		private readonly ITransactionDAO _transactionDAO;
+		private readonly INotificationDAO _notificationDAO;
 
-        public List<Account> GetAccountsByUser(int userId)
-        {
-            // TODO: load accounts by user
-            return default !;
-        }
+		public DashboardRepository(IAccountDAO accountDAO, ICardDAO cardDAO, ITransactionDAO transactionDAO, INotificationDAO notificationDAO)
+		{
+			_accountDAO = accountDAO;
+			_cardDAO = cardDAO;
+			_transactionDAO = transactionDAO;
+			_notificationDAO = notificationDAO;
+		}
 
-        public List<Card> GetCardsByUser(int userId)
-        {
-            // TODO: load cards by user
-            return default !;
-        }
-
-        public List<Transaction> GetRecentTransactions(int accountId, int limit = 10)
-        {
-            // TODO: load recent transactions
-            return default !;
-        }
-
-        public int GetUnreadNotificationCount(int userId)
-        {
-            // TODO: load unread notification count
-            return default !;
-        }
-    }
+		public List<Account> GetAccountsByUser(int userId)
+		{
+			return _accountDAO.FindByUserId(userId);
+		}
+		public List<Card> GetCardsByUser(int userId)
+		{
+			return _cardDAO.FindByUserId(userId);
+		}
+		public List<Transaction> GetRecentTransactions(int accountId, int limit = 10)
+		{
+			return _transactionDAO.FindRecentByAccountId(accountId, limit);
+		}
+		public int GetUnreadNotificationCount(int userId)
+		{
+			return _notificationDAO.CountUnreadByUserId(userId);
+		}
+	}
 }

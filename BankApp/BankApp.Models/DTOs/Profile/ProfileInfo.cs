@@ -1,4 +1,4 @@
-using BankApp.Models.Entities;
+﻿using BankApp.Models.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,16 +17,22 @@ namespace BankApp.Models.DTOs.Profile
         public string? Nationality { get; set; }
         public bool Is2FAEnabled { get; set; }
 
-        public ProfileInfo()
-        {
-            // TODO: implement profile info logic
-            ;
-        }
+        public ProfileInfo() { }
+
+
 
         public ProfileInfo(User user)
         {
-            // TODO: implement profile info logic
-            ;
+            if (user != null)
+            {
+                UserId = user.Id;
+                Email = user.Email;
+                FullName = user.FullName;
+                PhoneNumber = user.PhoneNumber;
+                Address = user.Address;
+                Nationality = user.Nationality;
+                Is2FAEnabled = user.Is2FAEnabled;
+            }
         }
     }
 }

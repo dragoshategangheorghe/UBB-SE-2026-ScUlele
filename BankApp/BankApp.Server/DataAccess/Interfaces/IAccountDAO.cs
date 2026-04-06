@@ -1,5 +1,4 @@
-using BankApp.Models.Entities;
-
+﻿using BankApp.Models.Entities;
 namespace BankApp.Server.DataAccess.Interfaces
 {
     public interface IAccountDAO

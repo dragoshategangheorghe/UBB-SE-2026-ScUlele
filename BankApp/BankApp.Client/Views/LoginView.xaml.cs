@@ -9,64 +9,106 @@ namespace BankApp.Client.Views
     public sealed partial class LoginView : Page, Observer<LoginState>
     {
         private readonly LoginViewModel _viewModel;
+
         public LoginView()
         {
-            // TODO: implement authentication logic
             this.InitializeComponent();
+
+            _viewModel = new LoginViewModel(App.ApiService);
+            _viewModel.State.AddObserver(this);
         }
 
         public void Update(LoginState state)
         {
-            // TODO: implement update logic
-            ;
+            OnStateChanged(state);
         }
 
         public void OnStateChanged(LoginState state)
         {
-            // TODO: implement on state logic
-            ;
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                HideLoading();
+                ErrorInfoBar.IsOpen = false;
+
+                switch (state)
+                {
+                    case LoginState.Idle:
+                        break;
+
+                    case LoginState.Loading:
+                        ShowLoading();
+                        break;
+
+                    case LoginState.Success:
+                        App.NavigationService.NavigateTo<NavView>(); // goes to NavView
+                        break;
+
+                    case LoginState.Require2FA:
+                        App.NavigationService.NavigateTo<TwoFactorView>();
+                        break;
+
+                    case LoginState.InvalidCredentials:
+                        ShowError("Invalid email or password.");
+                        break;
+
+                    case LoginState.AccountLocked:
+                        ShowError("Account is locked. Try again later.");
+                        break;
+
+                    case LoginState.Error:
+                        ShowError("Something went wrong. Please try again.");
+                        break;
+                }
+            });
         }
 
         public void ShowError(string msg)
         {
-            // TODO: update the UI
-            ;
+            ErrorInfoBar.Message = msg;
+            ErrorInfoBar.IsOpen = true;
         }
 
         public void ShowLoading()
         {
-            // TODO: update the UI
-            ;
+            LoadingRing.IsActive = true;
+            LoadingRing.Visibility = Visibility.Visible;
+            SignInButton.IsEnabled = false;
         }
 
         public void HideLoading()
         {
-            // TODO: update the UI
-            ;
+            LoadingRing.IsActive = false;
+            LoadingRing.Visibility = Visibility.Collapsed;
+            SignInButton.IsEnabled = true;
         }
 
         private void SignInButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: implement sign in button_ logic
-            ;
+            var email = EmailBox.Text.Trim();
+            var password = PasswordBox.Password;
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            {
+                ShowError("Please enter email and password.");
+                return;
+            }
+
+            _viewModel.Login(email, password);
         }
 
         private void GoogleLoginButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: implement authentication logic
-            ;
+            _viewModel.OAuthLogin(EmailBox.Text.Trim(), "Google");
         }
 
         private void ForgotPasswordButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: implement authentication logic
-            ;
+            App.NavigationService.NavigateTo<ForgotPasswordView>();
         }
 
         private void CreateAccountButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: implement create account button_ logic
-            ;
+            App.NavigationService.NavigateTo<RegisterView>();
         }
     }
 }
