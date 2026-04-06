@@ -8,52 +8,45 @@ namespace BankApp.Client.Services.Implementations
     public class CardApiService : ICardApiService
     {
         private readonly ApiService _apiService;
+
         public CardApiService(ApiService apiService)
         {
-            // TODO: implement card api service logic
-            ;
+            _apiService = apiService;
         }
 
         public Task<GetCardsResponse?> GetCardsAsync()
         {
-            // TODO: load cards
-            return default !;
+            return _apiService.GetAsync<GetCardsResponse>("api/cards");
         }
 
         public Task<CardDetailsResponse?> GetCardAsync(int cardId)
         {
-            // TODO: load card
-            return default !;
+            return _apiService.GetAsync<CardDetailsResponse>($"api/cards/{cardId}");
         }
 
         public Task<RevealCardResponse?> RevealCardAsync(int cardId, RevealCardRequest request)
         {
-            // TODO: implement reveal card logic
-            return default !;
+            return _apiService.PostAsync<RevealCardRequest, RevealCardResponse>($"api/cards/{cardId}/reveal", request);
         }
 
         public Task<CardCommandResponse?> FreezeCardAsync(int cardId)
         {
-            // TODO: implement freeze card logic
-            return default !;
+            return _apiService.PutAsync<object, CardCommandResponse>($"api/cards/{cardId}/freeze", new { });
         }
 
         public Task<CardCommandResponse?> UnfreezeCardAsync(int cardId)
         {
-            // TODO: implement unfreeze card logic
-            return default !;
+            return _apiService.PutAsync<object, CardCommandResponse>($"api/cards/{cardId}/unfreeze", new { });
         }
 
         public Task<CardCommandResponse?> UpdateSettingsAsync(int cardId, UpdateCardSettingsRequest request)
         {
-            // TODO: implement update settings logic
-            return default !;
+            return _apiService.PutAsync<UpdateCardSettingsRequest, CardCommandResponse>($"api/cards/{cardId}/settings", request);
         }
 
         public Task<CardCommandResponse?> UpdateSortPreferenceAsync(UpdateCardSortPreferenceRequest request)
         {
-            // TODO: implement update sort preference logic
-            return default !;
+            return _apiService.PutAsync<UpdateCardSortPreferenceRequest, CardCommandResponse>("api/cards/preferences/sort", request);
         }
     }
 }
