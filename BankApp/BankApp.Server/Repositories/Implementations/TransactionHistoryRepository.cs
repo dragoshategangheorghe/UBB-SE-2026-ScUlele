@@ -10,34 +10,32 @@ namespace BankApp.Server.Repositories.Implementations
         private readonly ITransactionDAO _transactionDao;
         private readonly IAccountDAO _accountDao;
         private readonly ICardDAO _cardDao;
+
         public TransactionHistoryRepository(ITransactionDAO transactionDao, IAccountDAO accountDao, ICardDAO cardDao)
         {
-            // TODO: implement transaction history repository logic
-            ;
+            _transactionDao = transactionDao;
+            _accountDao = accountDao;
+            _cardDao = cardDao;
         }
 
         public List<TransactionHistoryItemDto> GetTransactionsByUserId(int userId)
         {
-            // TODO: load transactions by user id
-            return default !;
+            return _transactionDao.FindByUserId(userId);
         }
 
         public TransactionHistoryItemDto? GetTransactionById(int userId, int transactionId)
         {
-            // TODO: load transaction by id
-            return default !;
+            return _transactionDao.FindById(userId, transactionId);
         }
 
         public List<Account> GetAccountsByUserId(int userId)
         {
-            // TODO: load accounts by user id
-            return default !;
+            return _accountDao.FindByUserId(userId);
         }
 
         public List<Card> GetCardsByUserId(int userId)
         {
-            // TODO: load cards by user id
-            return default !;
+            return _cardDao.FindByUserId(userId);
         }
     }
 }
