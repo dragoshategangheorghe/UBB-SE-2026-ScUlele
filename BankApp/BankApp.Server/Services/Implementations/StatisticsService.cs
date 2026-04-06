@@ -11,58 +11,129 @@ namespace BankApp.Server.Services.Implementations
     {
         private readonly ITransactionHistoryRepository _transactionHistoryRepository;
         private readonly TeamCOptions _options;
+
         public StatisticsService(ITransactionHistoryRepository transactionHistoryRepository, IOptions<TeamCOptions> options)
         {
-            // TODO: implement statistics service logic
-            ;
+            _transactionHistoryRepository = transactionHistoryRepository;
+            _options = options.Value;
         }
 
         public SpendingByCategoryResponse GetSpendingByCategory(int userId)
         {
-            // TODO: load spending by category
-            return default !;
+            List<TransactionHistoryItemDto> spendingTransactions = GetAnalyticsTransactions(userId)
+                .Where(transaction => IsDebit(transaction.Direction))
+                .ToList();
+
+            decimal totalSpending = spendingTransactions.Sum(transaction => transaction.Amount);
+            List<CategorySpendingPointDto> categories = spendingTransactions
+                .GroupBy(transaction => string.IsNullOrWhiteSpace(transaction.CategoryName) ? "Uncategorized" : transaction.CategoryName)
+                .Select(group => new CategorySpendingPointDto
+                {
+                    CategoryName = group.Key,
+                    Amount = group.Sum(transaction => transaction.Amount)
+                })
+                .OrderByDescending(category => category.Amount)
+                .ToList();
+
+            foreach (CategorySpendingPointDto category in categories)
+            {
+                category.ShareOfTotal = totalSpending == 0 ? 0 : Math.Round(category.Amount / totalSpending, 4);
+            }
+
+            return new SpendingByCategoryResponse
+            {
+                Success = true,
+                Message = "Spending by category loaded successfully.",
+                TotalSpending = totalSpending,
+                Categories = categories
+            };
         }
 
         public IncomeVsExpensesResponse GetIncomeVsExpenses(int userId)
         {
-            // TODO: load income vs expenses
-            return default !;
+            List<TransactionHistoryItemDto> transactions = GetAnalyticsTransactions(userId);
+            decimal income = transactions.Where(transaction => IsCredit(transaction.Direction)).Sum(transaction => transaction.Amount);
+            decimal expenses = transactions.Where(transaction => IsDebit(transaction.Direction)).Sum(transaction => transaction.Amount);
+
+            return new IncomeVsExpensesResponse
+            {
+                Success = true,
+                Message = "Income and expenses loaded successfully.",
+                Income = income,
+                Expenses = expenses,
+                Net = income - expenses
+            };
         }
 
         public BalanceTrendsResponse GetBalanceTrends(int userId)
         {
-            // TODO: load balance trends
-            return default !;
+            DateTime cutoffDate = DateTime.UtcNow.Date.AddDays(-_options.BalanceTrendDays + 1);
+            List<BalanceTrendPointDto> points = GetAnalyticsTransactions(userId)
+                .Where(transaction => transaction.Timestamp.Date >= cutoffDate)
+                .GroupBy(transaction => transaction.Timestamp.Date)
+                .Select(group => group.OrderByDescending(transaction => transaction.Timestamp).ThenByDescending(transaction => transaction.Id).First())
+                .OrderBy(transaction => transaction.Timestamp.Date)
+                .Select(transaction => new BalanceTrendPointDto
+                {
+                    Date = transaction.Timestamp.Date,
+                    Balance = transaction.RunningBalanceAfterTransaction
+                })
+                .ToList();
+
+            return new BalanceTrendsResponse
+            {
+                Success = true,
+                Message = "Balance trends loaded successfully.",
+                Points = points
+            };
         }
 
         public TopRecipientsResponse GetTopRecipients(int userId)
         {
-            // TODO: load top recipients
-            return default !;
+            List<TopCounterpartyDto> recipients = GetAnalyticsTransactions(userId)
+                .Where(transaction => IsDebit(transaction.Direction))
+                .Where(transaction => !string.IsNullOrWhiteSpace(transaction.CounterpartyOrMerchant))
+                .GroupBy(transaction => transaction.CounterpartyOrMerchant)
+                .Select(group => new TopCounterpartyDto
+                {
+                    Name = group.Key,
+                    TotalAmount = group.Sum(transaction => transaction.Amount),
+                    TransactionCount = group.Count()
+                })
+                .OrderByDescending(recipient => recipient.TotalAmount)
+                .ThenBy(recipient => recipient.Name, StringComparer.OrdinalIgnoreCase)
+                .Take(_options.TopRecipientsCount)
+                .ToList();
+
+            return new TopRecipientsResponse
+            {
+                Success = true,
+                Message = "Top recipients loaded successfully.",
+                Recipients = recipients
+            };
         }
 
         private List<TransactionHistoryItemDto> GetAnalyticsTransactions(int userId)
         {
-            // TODO: load analytics transactions
-            return default !;
+            return _transactionHistoryRepository.GetTransactionsByUserId(userId)
+                .Where(transaction => !IsFailed(transaction.Status))
+                .ToList();
         }
 
         private static bool IsDebit(string? direction)
         {
-            // TODO: implement is debit logic
-            return default !;
+            return string.Equals(direction, "Debit", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsCredit(string? direction)
         {
-            // TODO: implement is credit logic
-            return default !;
+            return string.Equals(direction, "Credit", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsFailed(string? status)
         {
-            // TODO: implement is failed logic
-            return default !;
+            return string.Equals(status, "Failed", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(status, "Reversed", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
