@@ -9,65 +9,60 @@ namespace BankApp.Server.Controllers
     public class CardsController : ControllerBase
     {
         private readonly ICardService _cardService;
+
         public CardsController(ICardService cardService)
         {
-            // TODO: implement cards controller logic
-            ;
+            _cardService = cardService;
         }
 
-        private int GetAuthenticatedUserId()
-        {
-            // TODO: load authenticated user id
-            return default !;
-        }
+        private int GetAuthenticatedUserId() => (int)HttpContext.Items["UserId"]!;
 
         [HttpGet]
         public IActionResult GetCards()
         {
-            // TODO: load cards
-            return default !;
+            return Ok(_cardService.GetCards(GetAuthenticatedUserId()));
         }
 
         [HttpGet("{cardId:int}")]
         public IActionResult GetCard(int cardId)
         {
-            // TODO: load card
-            return default !;
+            CardDetailsResponse response = _cardService.GetCard(GetAuthenticatedUserId(), cardId);
+            return response.Success ? Ok(response) : NotFound(response);
         }
 
         [HttpPost("{cardId:int}/reveal")]
         public IActionResult RevealCard(int cardId, [FromBody] RevealCardRequest request)
         {
-            // TODO: implement reveal card logic
-            return default !;
+            RevealCardResponse response = _cardService.RevealSensitiveDetails(GetAuthenticatedUserId(), cardId, request);
+            return response.Success || response.RequiresOtp ? Ok(response) : BadRequest(response);
         }
 
         [HttpPut("{cardId:int}/freeze")]
         public IActionResult FreezeCard(int cardId)
         {
-            // TODO: implement freeze card logic
-            return default !;
+            CardCommandResponse response = _cardService.FreezeCard(GetAuthenticatedUserId(), cardId);
+            return response.Success ? Ok(response) : BadRequest(response);
         }
 
         [HttpPut("{cardId:int}/unfreeze")]
         public IActionResult UnfreezeCard(int cardId)
         {
-            // TODO: implement unfreeze card logic
-            return default !;
+            CardCommandResponse response = _cardService.UnfreezeCard(GetAuthenticatedUserId(), cardId);
+            return response.Success ? Ok(response) : BadRequest(response);
         }
 
         [HttpPut("{cardId:int}/settings")]
         public IActionResult UpdateSettings(int cardId, [FromBody] UpdateCardSettingsRequest request)
         {
-            // TODO: implement update settings logic
-            return default !;
+            CardCommandResponse response = _cardService.UpdateSettings(GetAuthenticatedUserId(), cardId, request);
+            return response.Success ? Ok(response) : BadRequest(response);
         }
 
         [HttpPut("preferences/sort")]
         public IActionResult UpdateSortPreference([FromBody] UpdateCardSortPreferenceRequest request)
         {
-            // TODO: implement update sort preference logic
-            return default !;
+            CardCommandResponse response = _cardService.UpdateSortPreference(GetAuthenticatedUserId(), request);
+            return response.Success ? Ok(response) : BadRequest(response);
         }
     }
 }
