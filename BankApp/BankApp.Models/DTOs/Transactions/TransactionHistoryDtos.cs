@@ -25,8 +25,8 @@ namespace BankApp.Models.DTOs.Transactions
     {
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
-        public TransactionHistoryRequest AppliedFilters { get; set; };
-        public List<TransactionHistoryItemDto> Transactions { get; set; };
+        public TransactionHistoryRequest AppliedFilters { get; set; } = new();
+        public List<TransactionHistoryItemDto> Transactions { get; set; } = new();
     }
 
     public class TransactionDetailsResponse
@@ -40,11 +40,11 @@ namespace BankApp.Models.DTOs.Transactions
     {
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
-        public List<AccountFilterOptionDto> Accounts { get; set; };
-        public List<CardFilterOptionDto> Cards { get; set; };
-        public List<string> AvailableTransactionTypes { get; set; };
-        public List<string> AvailableStatuses { get; set; };
-        public List<string> AvailableDirections { get; set; };
+        public List<AccountFilterOptionDto> Accounts { get; set; } = new();
+        public List<CardFilterOptionDto> Cards { get; set; } = new();
+        public List<string> AvailableTransactionTypes { get; set; } = new();
+        public List<string> AvailableStatuses { get; set; } = new();
+        public List<string> AvailableDirections { get; set; } = new();
     }
 
     public class TransactionHistoryItemDto
