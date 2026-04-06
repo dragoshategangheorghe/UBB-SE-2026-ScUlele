@@ -5,7 +5,7 @@ namespace BankApp.Models.DTOs.Statistics
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
         public decimal TotalSpending { get; set; }
-        public List<CategorySpendingPointDto> Categories { get; set; };
+        public List<CategorySpendingPointDto> Categories { get; set; } = new();
     }
 
     public class IncomeVsExpensesResponse
@@ -21,14 +21,14 @@ namespace BankApp.Models.DTOs.Statistics
     {
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
-        public List<BalanceTrendPointDto> Points { get; set; };
+        public List<BalanceTrendPointDto> Points { get; set; } = new();
     }
 
     public class TopRecipientsResponse
     {
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
-        public List<TopCounterpartyDto> Recipients { get; set; };
+        public List<TopCounterpartyDto> Recipients { get; set; } = new();
     }
 
     public class CategorySpendingPointDto
