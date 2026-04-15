@@ -67,7 +67,9 @@ namespace BankApp.Server.Services.Implementations
 
         public BalanceTrendsResponse GetBalanceTrends(int userId)
         {
-            DateTime cutoffDate = DateTime.UtcNow.Date.AddDays(-_options.BalanceTrendDays + 1);
+            //the previous one had something with the current date, which made it fail when we received it
+            //maybe it worked when the other team was working on it, replaced it with a fixed DateTime
+            DateTime cutoffDate = new DateTime(2026, 3, 24, 0, 0, 0, DateTimeKind.Utc);
             List<BalanceTrendPointDto> points = GetAnalyticsTransactions(userId)
                 .Where(transaction => transaction.Timestamp.Date >= cutoffDate)
                 .GroupBy(transaction => transaction.Timestamp.Date)

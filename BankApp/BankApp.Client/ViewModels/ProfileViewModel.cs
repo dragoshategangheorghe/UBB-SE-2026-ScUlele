@@ -1,5 +1,5 @@
 ﻿using BankApp.Client.Utilities;
-using BankApp.Client.ViewModels.Base;
+
 using BankApp.Models.DTOs.Profile;
 using BankApp.Models.Entities;
 using BankApp.Models.Enums;

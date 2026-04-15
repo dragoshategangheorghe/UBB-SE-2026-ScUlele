@@ -16,10 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="BankApp.Models">
-      <HintPath>..\BankApp.Models\bin\Debug\net8.0\BankApp.Models.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
+    <ProjectReference Include="..\BankApp.Models\BankApp.Models.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="BankApp.Server">
       <HintPath>..\BankApp.Server\bin\Debug\net8.0\BankApp.Server.dll</HintPath>
       <Private>true</Private>

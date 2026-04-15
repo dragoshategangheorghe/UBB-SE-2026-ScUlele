@@ -10,6 +10,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankApp.Client", "BankApp.Client\BankApp.Client.csproj", "{F6376F3A-D849-4E93-90D2-530352BFB52E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankApp.Server.Tests", "BankApp.Server.Tests\BankApp.Server.Tests.csproj", "{CF117812-B2D2-4102-9F0E-67C8B0A31087}"
+	ProjectSection(ProjectDependencies) = postProject
+		{787D4D90-ABA6-49FE-9BA7-A1B9F9DF9D9B} = {787D4D90-ABA6-49FE-9BA7-A1B9F9DF9D9B}
+		{CBCB47B0-9B4B-4F71-B5D7-AEAF38AA561A} = {CBCB47B0-9B4B-4F71-B5D7-AEAF38AA561A}
+		{F6376F3A-D849-4E93-90D2-530352BFB52E} = {F6376F3A-D849-4E93-90D2-530352BFB52E}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
