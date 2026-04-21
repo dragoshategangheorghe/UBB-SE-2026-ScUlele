@@ -1,4 +1,10 @@
 ﻿namespace BankApp.Models.Enums
 {
-    public enum DashboardState { Idle, Loading, Success, Error }
+    public enum DashboardState
+    {
+        Idle,
+        Loading,
+        Success,
+        Error
+    }
 }

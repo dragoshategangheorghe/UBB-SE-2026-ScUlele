@@ -15,14 +15,14 @@ public class TransactionAndStatisticsTests
     [Fact]
     public void GetHistory_FiltersAndSortsTransactions_BySearchStatusDirectionAndAmount()
     {
-        Mock<ITransactionHistoryRepository> repositoryMock = new();
-        Mock<ITransactionExportService> exportServiceMock = new();
+        Mock<ITransactionHistoryRepository> repositoryMock = new ();
+        Mock<ITransactionExportService> exportServiceMock = new ();
 
         repositoryMock
             .Setup(repository => repository.GetTransactionsByUserId(10))
             .Returns(CreateTransactions());
 
-        TransactionHistoryService service = new(repositoryMock.Object, exportServiceMock.Object);
+        TransactionHistoryService service = new (repositoryMock.Object, exportServiceMock.Object);
 
         TransactionHistoryResponse response = service.GetHistory(10, new TransactionHistoryRequest
         {
@@ -42,13 +42,13 @@ public class TransactionAndStatisticsTests
     [Fact]
     public void GetSpendingByCategory_ComputesTotalsAndShares()
     {
-        Mock<ITransactionHistoryRepository> repositoryMock = new();
+        Mock<ITransactionHistoryRepository> repositoryMock = new ();
 
         repositoryMock
             .Setup(repository => repository.GetTransactionsByUserId(10))
             .Returns(CreateTransactions());
 
-        StatisticsService service = new(repositoryMock.Object, Options.Create(new TeamCOptions()));
+        StatisticsService service = new (repositoryMock.Object, Options.Create(new TeamCOptions()));
 
         var response = service.GetSpendingByCategory(10);
 
@@ -62,13 +62,13 @@ public class TransactionAndStatisticsTests
     [Fact]
     public void GetIncomeVsExpenses_ComputesNetBalance()
     {
-        Mock<ITransactionHistoryRepository> repositoryMock = new();
+        Mock<ITransactionHistoryRepository> repositoryMock = new ();
 
         repositoryMock
             .Setup(repository => repository.GetTransactionsByUserId(10))
             .Returns(CreateTransactions());
 
-        StatisticsService service = new(repositoryMock.Object, Options.Create(new TeamCOptions()));
+        StatisticsService service = new (repositoryMock.Object, Options.Create(new TeamCOptions()));
 
         var response = service.GetIncomeVsExpenses(10);
 
@@ -81,8 +81,8 @@ public class TransactionAndStatisticsTests
     [Fact]
     public void GetFilterMetadata_ReturnsSortedDistinctOptions()
     {
-        Mock<ITransactionHistoryRepository> repositoryMock = new();
-        Mock<ITransactionExportService> exportServiceMock = new();
+        Mock<ITransactionHistoryRepository> repositoryMock = new ();
+        Mock<ITransactionExportService> exportServiceMock = new ();
 
         repositoryMock
             .Setup(repository => repository.GetTransactionsByUserId(10))
@@ -91,18 +91,18 @@ public class TransactionAndStatisticsTests
             .Setup(repository => repository.GetAccountsByUserId(10))
             .Returns(new List<Account>
             {
-                new() { Id = 2, AccountName = "Savings", IBAN = "RO49AAAA1B31007593840000" },
-                new() { Id = 1, AccountName = "Everyday", IBAN = "RO49AAAA1B31007593840001" }
+                new () { Id = 2, AccountName = "Savings", IBAN = "RO49AAAA1B31007593840000" },
+                new () { Id = 1, AccountName = "Everyday", IBAN = "RO49AAAA1B31007593840001" }
             });
         repositoryMock
             .Setup(repository => repository.GetCardsByUserId(10))
             .Returns(new List<Card>
             {
-                new() { Id = 8, CardBrand = "Visa", CardType = "Debit", CardNumber = "4111111111111111" },
-                new() { Id = 7, CardBrand = "Mastercard", CardType = "Debit", CardNumber = "5555444433331111" }
+                new () { Id = 8, CardBrand = "Visa", CardType = "Debit", CardNumber = "4111111111111111" },
+                new () { Id = 7, CardBrand = "Mastercard", CardType = "Debit", CardNumber = "5555444433331111" }
             });
 
-        TransactionHistoryService service = new(repositoryMock.Object, exportServiceMock.Object);
+        TransactionHistoryService service = new (repositoryMock.Object, exportServiceMock.Object);
 
         TransactionFilterMetadataResponse response = service.GetFilterMetadata(10);
 
@@ -117,13 +117,13 @@ public class TransactionAndStatisticsTests
     [Fact]
     public void GetBalanceTrends_ReturnsLatestDailyBalance_ForConfiguredWindow()
     {
-        Mock<ITransactionHistoryRepository> repositoryMock = new();
+        Mock<ITransactionHistoryRepository> repositoryMock = new ();
 
         repositoryMock
             .Setup(repository => repository.GetTransactionsByUserId(10))
             .Returns(CreateTransactionsForBalanceTrends());
 
-        StatisticsService service = new(
+        StatisticsService service = new (
             repositoryMock.Object,
             Options.Create(new TeamCOptions
             {
@@ -143,13 +143,13 @@ public class TransactionAndStatisticsTests
     [Fact]
     public void GetTopRecipients_ExcludesFailedAndReversedTransactions_AndLimitsResultCount()
     {
-        Mock<ITransactionHistoryRepository> repositoryMock = new();
+        Mock<ITransactionHistoryRepository> repositoryMock = new ();
 
         repositoryMock
             .Setup(repository => repository.GetTransactionsByUserId(10))
             .Returns(CreateTransactionsForTopRecipients());
 
-        StatisticsService service = new(
+        StatisticsService service = new (
             repositoryMock.Object,
             Options.Create(new TeamCOptions
             {
@@ -172,7 +172,7 @@ public class TransactionAndStatisticsTests
     {
         return new List<TransactionHistoryItemDto>
         {
-            new()
+            new ()
             {
                 Id = 1,
                 AccountId = 1,
@@ -187,7 +187,7 @@ public class TransactionAndStatisticsTests
                 Status = "Completed",
                 CategoryName = "Groceries"
             },
-            new()
+            new ()
             {
                 Id = 2,
                 AccountId = 1,
@@ -202,7 +202,7 @@ public class TransactionAndStatisticsTests
                 Status = "Completed",
                 CategoryName = "Groceries"
             },
-            new()
+            new ()
             {
                 Id = 3,
                 AccountId = 1,
@@ -217,7 +217,7 @@ public class TransactionAndStatisticsTests
                 Status = "Completed",
                 CategoryName = "Income"
             },
-            new()
+            new ()
             {
                 Id = 4,
                 AccountId = 1,
@@ -239,7 +239,7 @@ public class TransactionAndStatisticsTests
     {
         return new List<TransactionHistoryItemDto>
         {
-            new()
+            new ()
             {
                 Id = 10,
                 Timestamp = new DateTime(2026, 3, 24, 9, 0, 0, DateTimeKind.Utc),
@@ -251,7 +251,7 @@ public class TransactionAndStatisticsTests
                 ReferenceNumber = "BAL-001",
                 Currency = "EUR"
             },
-            new()
+            new ()
             {
                 Id = 11,
                 Timestamp = new DateTime(2026, 3, 24, 18, 30, 0, DateTimeKind.Utc),
@@ -263,7 +263,7 @@ public class TransactionAndStatisticsTests
                 ReferenceNumber = "BAL-002",
                 Currency = "EUR"
             },
-            new()
+            new ()
             {
                 Id = 12,
                 Timestamp = new DateTime(2026, 3, 25, 12, 0, 0, DateTimeKind.Utc),
@@ -282,7 +282,7 @@ public class TransactionAndStatisticsTests
     {
         return new List<TransactionHistoryItemDto>
         {
-            new()
+            new ()
             {
                 Id = 20,
                 Timestamp = new DateTime(2026, 3, 20, 10, 0, 0),
@@ -294,7 +294,7 @@ public class TransactionAndStatisticsTests
                 ReferenceNumber = "TOP-001",
                 Currency = "EUR"
             },
-            new()
+            new ()
             {
                 Id = 21,
                 Timestamp = new DateTime(2026, 3, 21, 10, 0, 0),
@@ -306,7 +306,7 @@ public class TransactionAndStatisticsTests
                 ReferenceNumber = "TOP-002",
                 Currency = "EUR"
             },
-            new()
+            new ()
             {
                 Id = 22,
                 Timestamp = new DateTime(2026, 3, 22, 10, 0, 0),
@@ -318,7 +318,7 @@ public class TransactionAndStatisticsTests
                 ReferenceNumber = "TOP-003",
                 Currency = "EUR"
             },
-            new()
+            new ()
             {
                 Id = 23,
                 Timestamp = new DateTime(2026, 3, 23, 10, 0, 0),
@@ -330,7 +330,7 @@ public class TransactionAndStatisticsTests
                 ReferenceNumber = "TOP-004",
                 Currency = "EUR"
             },
-            new()
+            new ()
             {
                 Id = 24,
                 Timestamp = new DateTime(2026, 3, 24, 10, 0, 0),

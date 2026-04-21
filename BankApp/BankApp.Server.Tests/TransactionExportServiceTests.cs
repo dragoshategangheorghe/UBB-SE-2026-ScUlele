@@ -12,7 +12,7 @@ public class TransactionExportServiceTests
     [Fact]
     public void ExportStatement_ReturnsCsvWithExpectedHeader()
     {
-        TransactionExportService service = new();
+        TransactionExportService service = new ();
 
         var result = service.ExportStatement(CreateTransactions(), new TransactionHistoryRequest(), TransactionExportFormats.Csv);
         string content = Encoding.UTF8.GetString(result.Content);
@@ -25,7 +25,7 @@ public class TransactionExportServiceTests
     [Fact]
     public void ExportStatement_ReturnsPdfDocument()
     {
-        TransactionExportService service = new();
+        TransactionExportService service = new ();
 
         var result = service.ExportStatement(CreateTransactions(), new TransactionHistoryRequest(), TransactionExportFormats.Pdf);
 
@@ -36,12 +36,12 @@ public class TransactionExportServiceTests
     [Fact]
     public void ExportStatement_ReturnsXlsxArchive()
     {
-        TransactionExportService service = new();
+        TransactionExportService service = new ();
 
         var result = service.ExportStatement(CreateTransactions(), new TransactionHistoryRequest(), TransactionExportFormats.Xlsx);
 
-        using MemoryStream memoryStream = new(result.Content);
-        using ZipArchive archive = new(memoryStream, ZipArchiveMode.Read);
+        using MemoryStream memoryStream = new (result.Content);
+        using ZipArchive archive = new (memoryStream, ZipArchiveMode.Read);
 
         Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.ContentType);
         Assert.Contains(archive.Entries, entry => entry.FullName == "xl/worksheets/sheet1.xml");
@@ -50,7 +50,7 @@ public class TransactionExportServiceTests
     [Fact]
     public void ExportReceipt_ReturnsPdfReceiptNamedForTransaction()
     {
-        TransactionExportService service = new();
+        TransactionExportService service = new ();
 
         TransactionExportResult result = service.ExportReceipt(CreateTransactions()[0]);
 
@@ -63,7 +63,7 @@ public class TransactionExportServiceTests
     {
         return new List<TransactionHistoryItemDto>
         {
-            new()
+            new ()
             {
                 Id = 100,
                 ReferenceNumber = "REF-100",

@@ -8,27 +8,27 @@ public static class Program
     {
         IReadOnlyList<TestCase> testCases = DiscoverTests();
         int passedCount = 0;
-        List<string> failures = new();
+        List<string> failures = new ();
 
         foreach (TestCase testCase in testCases)
         {
             try
             {
-                object? instance = Activator.CreateInstance(testCase.TestClass);
-                testCase.Method.Invoke(instance, Array.Empty<object>());
-                Console.WriteLine($"PASS {testCase.TestClass.Name}.{testCase.Method.Name}");
+                object? instance = Activator.CreateInstance(testCase.testClass);
+                testCase.method.Invoke(instance, Array.Empty<object>());
+                Console.WriteLine($"PASS {testCase.testClass.Name}.{testCase.method.Name}");
                 passedCount++;
             }
             catch (TargetInvocationException exception) when (exception.InnerException != null)
             {
-                failures.Add($"{testCase.TestClass.Name}.{testCase.Method.Name}: {exception.InnerException.Message}");
-                Console.WriteLine($"FAIL {testCase.TestClass.Name}.{testCase.Method.Name}");
+                failures.Add($"{testCase.testClass.Name}.{testCase.method.Name}: {exception.InnerException.Message}");
+                Console.WriteLine($"FAIL {testCase.testClass.Name}.{testCase.method.Name}");
                 Console.WriteLine(exception.InnerException.Message);
             }
             catch (Exception exception)
             {
-                failures.Add($"{testCase.TestClass.Name}.{testCase.Method.Name}: {exception.Message}");
-                Console.WriteLine($"FAIL {testCase.TestClass.Name}.{testCase.Method.Name}");
+                failures.Add($"{testCase.testClass.Name}.{testCase.method.Name}: {exception.Message}");
+                Console.WriteLine($"FAIL {testCase.testClass.Name}.{testCase.method.Name}");
                 Console.WriteLine(exception.Message);
             }
         }
@@ -59,10 +59,10 @@ public static class Program
                 .Where(method => method.GetParameters().Length == 0 &&
                                  method.GetCustomAttribute<Xunit.FactAttribute>() != null)
                 .Select(method => new TestCase(type, method)))
-            .OrderBy(testCase => testCase.TestClass.Name, StringComparer.Ordinal)
-            .ThenBy(testCase => testCase.Method.Name, StringComparer.Ordinal)
+            .OrderBy(testCase => testCase.testClass.Name, StringComparer.Ordinal)
+            .ThenBy(testCase => testCase.method.Name, StringComparer.Ordinal)
             .ToList();
     }
 
-    private sealed record TestCase(Type TestClass, MethodInfo Method);
+    private sealed record TestCase(Type testClass, MethodInfo method);
 }
