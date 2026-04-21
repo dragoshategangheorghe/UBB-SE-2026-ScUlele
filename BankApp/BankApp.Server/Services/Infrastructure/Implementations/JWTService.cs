@@ -1,22 +1,22 @@
-﻿using BankApp.Server.Services.Infrastructure.Interfaces;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using BankApp.Server.Services.Infrastructure.Interfaces;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BankApp.Server.Services.Infrastructure.Implementations
 {
     public class JWTService : IJWTService
     {
-        private readonly string _secret;
+        private readonly string secret;
         public JWTService(string secret)
         {
-            _secret = secret;
+            this.secret = secret;
         }
 
         public string GenerateToken(int userId)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
@@ -27,14 +27,13 @@ namespace BankApp.Server.Services.Infrastructure.Implementations
             var token = new JwtSecurityToken(
                 claims: claims,
                 expires: DateTime.UtcNow.AddDays(7),
-                signingCredentials: credentials
-            );
+                signingCredentials: credentials);
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         public ClaimsPrincipal? ValidateToken(string token)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
             var handler = new JwtSecurityTokenHandler();
 
             try
@@ -61,7 +60,10 @@ namespace BankApp.Server.Services.Infrastructure.Implementations
             var claim = principal?.FindFirst("userId");
 
             if (claim != null && int.TryParse(claim.Value, out var userId))
+            {
                 return userId;
+            }
+
             return null;
         }
     }

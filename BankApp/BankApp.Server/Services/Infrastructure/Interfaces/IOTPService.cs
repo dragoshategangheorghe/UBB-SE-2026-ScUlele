@@ -8,5 +8,4 @@ public interface IOTPService
     bool VerifySMSOTP(int userId, string code);
     bool IsExpired(DateTime expiredAt);
     void InvalidateOTP(int userId);
-
 }

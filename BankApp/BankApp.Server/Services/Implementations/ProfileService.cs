@@ -13,18 +13,18 @@ namespace BankApp.Server.Services.Implementations
 {
     public class ProfileService : IProfileService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IHashService _hashService;
+        private readonly IUserRepository userRepository;
+        private readonly IHashService hashService;
 
         public ProfileService(IUserRepository userRepository, IHashService hashService)
         {
-            _userRepository = userRepository;
-            _hashService = hashService;
+            this.userRepository = userRepository;
+            this.hashService = hashService;
         }
 
         public User? GetUserById(int userId)
         {
-            return _userRepository.FindById(userId);
+            return userRepository.FindById(userId);
         }
 
         public UpdateProfileResponse UpdatePersonalInfo(UpdateProfileRequest request)
@@ -36,7 +36,7 @@ namespace BankApp.Server.Services.Implementations
 
             int userId = request.UserId.Value;
 
-            User? user = _userRepository.FindById(userId);
+            User? user = userRepository.FindById(userId);
             if (user == null)
             {
                 return new UpdateProfileResponse(false, "User not found.");
@@ -60,7 +60,7 @@ namespace BankApp.Server.Services.Implementations
             }
 
             // Update the user in the repo
-            if (_userRepository.UpdateUser(user) == false)
+            if (userRepository.UpdateUser(user) == false)
             {
                 return new UpdateProfileResponse(false, "Could not update user.");
             }
@@ -70,17 +70,17 @@ namespace BankApp.Server.Services.Implementations
 
         public ChangePasswordResponse ChangePassword(ChangePasswordRequest request)
         {
-            User? user = _userRepository.FindById(request.UserId);
+            User? user = userRepository.FindById(request.UserId);
             if (user == null)
             {
                 // Just making sure, should never happen though
                 return new ChangePasswordResponse(false, "User not found.");
             }
 
-            if (_hashService.Verify(request.CurrentPassword, user.PasswordHash))
+            if (hashService.Verify(request.CurrentPassword, user.PasswordHash))
             {
-                user.PasswordHash = _hashService.GetHash(request.NewPassword);
-                _userRepository.UpdatePassword(user.Id, user.PasswordHash);
+                user.PasswordHash = hashService.GetHash(request.NewPassword);
+                userRepository.UpdatePassword(user.Id, user.PasswordHash);
                 return new ChangePasswordResponse(true, "Password changed successfully.");
             }
             else
@@ -91,19 +91,19 @@ namespace BankApp.Server.Services.Implementations
 
         public bool Enable2FA(int userId, TwoFactorMethod method)
         {
-            User? user = _userRepository.FindById(userId);
+            User? user = userRepository.FindById(userId);
             if (user == null)
             {
                 return false;
             }
             user.Is2FAEnabled = true;
             user.Preferred2FAMethod = method.ToString();
-            return _userRepository.UpdateUser(user);
+            return userRepository.UpdateUser(user);
         }
 
         public bool Disable2FA(int userId)
         {
-            User? user = _userRepository.FindById(userId);
+            User? user = userRepository.FindById(userId);
             if (user == null)
             {
                 return false;
@@ -111,19 +111,19 @@ namespace BankApp.Server.Services.Implementations
 
             user.Is2FAEnabled = false;
             user.Preferred2FAMethod = null;
-            return _userRepository.UpdateUser(user);
+            return userRepository.UpdateUser(user);
         }
 
         public List<OAuthLink> GetOAuthLinks(int userId)
         {
-            User? user = _userRepository.FindById(userId);
+            User? user = userRepository.FindById(userId);
             if (user == null)
             {
                 // Just making sure, should never happen though
                 return new List<OAuthLink>();
             }
 
-            return _userRepository.GetLinkedProviders(userId);
+            return userRepository.GetLinkedProviders(userId);
         }
 
         public bool LinkOAuth(int userId, string provider)
@@ -138,31 +138,31 @@ namespace BankApp.Server.Services.Implementations
 
         public List<NotificationPreference> GetNotificationPreferences(int userId)
         {
-            User? user = _userRepository.FindById(userId);
+            User? user = userRepository.FindById(userId);
             if (user == null)
             {
                 // AGAIN just making sure, should never happen
                 return new List<NotificationPreference>();
             }
 
-            return _userRepository.GetNotificationPreferences(userId);
+            return userRepository.GetNotificationPreferences(userId);
         }
 
         public bool UpdateNotificationPreferences(int userId, List<NotificationPreference> prefs)
         {
-            User? user = _userRepository.FindById(userId);
+            User? user = userRepository.FindById(userId);
             if (user == null)
             {
                 // Last time just making sure, should never happen
                 return false;
             }
 
-            return _userRepository.UpdateNotificationPreferences(userId, prefs);
+            return userRepository.UpdateNotificationPreferences(userId, prefs);
         }
 
         public bool VerifyPassword(int userId, string password)
         {
-            User? user = _userRepository.FindById(userId);
+            User? user = userRepository.FindById(userId);
 
             if (user == null)
             {
@@ -170,7 +170,7 @@ namespace BankApp.Server.Services.Implementations
                 return false;
             }
 
-            return _hashService.Verify(password, user.PasswordHash);
+            return hashService.Verify(password, user.PasswordHash);
         }
     }
 }

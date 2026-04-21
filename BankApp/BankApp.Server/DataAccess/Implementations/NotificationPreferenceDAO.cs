@@ -1,23 +1,22 @@
-﻿using BankApp.Models.Entities;
-using BankApp.Server.DataAccess.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using BankApp.Models.Extensions;
+using BankApp.Models.Entities;
 using BankApp.Models.Enums;
+using BankApp.Models.Extensions;
+using BankApp.Server.DataAccess.Interfaces;
 namespace BankApp.Server.DataAccess
 {
      internal class NotificationPreferenceDAO : INotificationPreferenceDAO
-    {
-
-        private AppDbContext _appDbContext;
+     {
+        private AppDbContext appDbContext;
 
         public NotificationPreferenceDAO(AppDbContext appDbContext)
         {
-            _appDbContext = appDbContext;
+            this.appDbContext = appDbContext;
         }
 
         public bool Create(int userId, string category)
@@ -29,7 +28,7 @@ namespace BankApp.Server.DataAccess
                                         (@p0, @p1, 0, 0, 0);
                                     ";
 
-                int rows = this._appDbContext.ExecuteNonQuery(insertQuery, [userId, category]);
+                int rows = this.appDbContext.ExecuteNonQuery(insertQuery, ([userId, category]));
 
                 return rows > 0;
             }
@@ -44,9 +43,7 @@ namespace BankApp.Server.DataAccess
             List<NotificationPreference> result = new List<NotificationPreference>();
             string selectQuery = @"SELECT * FROM NotificationPreference WHERE userId = @p0";
 
-            using IDataReader data = this._appDbContext.ExecuteQuery(selectQuery, [userId]);
-
-
+            using IDataReader data = this.appDbContext.ExecuteQuery(selectQuery, ([userId]));
             while (data.Read())
             {
                 NotificationPreference notificationPreference = new NotificationPreference
@@ -61,9 +58,7 @@ namespace BankApp.Server.DataAccess
                 };
 
                 result.Add(notificationPreference);
-
             }
-
             return result;
         }
         public bool Update(int userId, List<NotificationPreference> prefs)
@@ -71,7 +66,7 @@ namespace BankApp.Server.DataAccess
             try
             {
                 string deleteQuery = @"DELETE FROM NotificationPreference WHERE userId = @p0";
-                this._appDbContext.ExecuteNonQuery(deleteQuery, [userId]);
+                this.appDbContext.ExecuteNonQuery(deleteQuery, ([userId]));
 
                 string insertQuery = @"INSERT INTO NotificationPreference (UserId, Category, PushEnabled, EmailEnabled, SmsEnabled, MinAmountThreshold)
                                         VALUES
@@ -80,14 +75,14 @@ namespace BankApp.Server.DataAccess
 
                 foreach (NotificationPreference preference in prefs)
                 {
-                    this._appDbContext.ExecuteNonQuery(insertQuery, [
+                    this.appDbContext.ExecuteNonQuery(insertQuery, ([
                             preference.UserId,
                         NotificationTypeExtensions.ToDisplayName(preference.Category),
                         preference.PushEnabled,
                         preference.EmailEnabled,
                         preference.SmsEnabled,
                         preference.MinAmountThreshold!
-                        ]);
+                        ]));
                 }
 
                 return true;

@@ -10,14 +10,17 @@ namespace BankApp.Server.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly IAuthService _authService;
-        public AuthController(IAuthService authService) { _authService = authService; }
+        private readonly IAuthService authService;
+        public AuthController(IAuthService authService)
+        {
+            this.authService = authService;
+        }
 
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest request)
         {
-            LoginResponse response = _authService.Login(request);
-            
+            LoginResponse response = authService.Login(request);
+
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -29,7 +32,7 @@ namespace BankApp.Server.Controllers
         [HttpPost("register")]
         public IActionResult Register([FromBody] RegisterRequest request)
         {
-            RegisterResponse response = _authService.Register(request);
+            RegisterResponse response = authService.Register(request);
 
             if (!response.Success)
             {
@@ -42,7 +45,7 @@ namespace BankApp.Server.Controllers
         [HttpPost("verify-otp")]
         public IActionResult VerifyOTP([FromBody] VerifyOTPRequest request)
         {
-            LoginResponse response = _authService.VerifyOTP(request);
+            LoginResponse response = authService.VerifyOTP(request);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -57,7 +60,7 @@ namespace BankApp.Server.Controllers
             {
                 return BadRequest(new { error = "Email is required." });
             }
-            _authService.RequestPasswordReset(request.Email);
+            authService.RequestPasswordReset(request.Email);
 
             // Always return an OK response with a generic message ( prevent malicious operations )
             return Ok(new { message = "If an account with that email exists, a password reset link has been sent." });
@@ -76,7 +79,7 @@ namespace BankApp.Server.Controllers
                 return BadRequest(new { error = "Password must be at least 8 characters with uppercase, lowercase, a digit, and a special character." });
             }
 
-            bool isSuccess = _authService.ResetPassword(request.Token, request.NewPassword);
+            bool isSuccess = authService.ResetPassword(request.Token, request.NewPassword);
             if (!isSuccess)
             {
                 return BadRequest(new { error = "Invalid, expired, or already used reset token." });
@@ -97,7 +100,7 @@ namespace BankApp.Server.Controllers
 
             string token = authorization.Substring("Bearer ".Length);
 
-            if (!_authService.Logout(token))
+            if (!authService.Logout(token))
             {
                 return BadRequest(new { error = "Invalid session." });
             }
@@ -108,7 +111,7 @@ namespace BankApp.Server.Controllers
         [HttpPost("resend-otp")]
         public IActionResult ResendOTP([FromQuery] int userId, [FromQuery] string method = "email")
         {
-            _authService.ResendOTP(userId, method);
+            authService.ResendOTP(userId, method);
             return Ok(new { message = "If the user exists, a new code has been sent." });
         }
 
@@ -120,7 +123,7 @@ namespace BankApp.Server.Controllers
                 return BadRequest(new { error = "Provider and ProviderToken are required." });
             }
 
-            LoginResponse response = await _authService.OAuthLoginAsync(request);
+            LoginResponse response = await authService.OAuthLoginAsync(request);
 
             if (!response.Success)
             {
@@ -129,7 +132,10 @@ namespace BankApp.Server.Controllers
 
             return Ok(response);
         }
-        public class VerifyTokenDto { public string Token { get; set; } = string.Empty; }
+        public class VerifyTokenDto
+        {
+            public string Token { get; set; } = string.Empty;
+        }
 
         [HttpPost("verify-reset-token")]
         public IActionResult VerifyResetToken([FromBody] VerifyTokenDto request)
@@ -139,7 +145,7 @@ namespace BankApp.Server.Controllers
                 return BadRequest(new { error = "Token is required." });
             }
 
-            bool isValid = _authService.VerifyResetToken(request.Token);
+            bool isValid = authService.VerifyResetToken(request.Token);
             if (!isValid)
             {
                 return BadRequest(new { error = "Invalid or expired token." });
@@ -147,6 +153,5 @@ namespace BankApp.Server.Controllers
 
             return Ok(new { message = "Token is valid." });
         }
-
     }
 }

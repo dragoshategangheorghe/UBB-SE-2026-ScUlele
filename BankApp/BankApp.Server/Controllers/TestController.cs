@@ -6,9 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace BankApp.Server.Controllers
 {
     // This controller is just used for testing endpoints, have fun :) <3 B
-    // THIS SHOULD NOT GO INTO PRODUCTION FOR ANY REASON WHATSOEVER, AFTER WE ARE DONE 
+    // THIS SHOULD NOT GO INTO PRODUCTION FOR ANY REASON WHATSOEVER, AFTER WE ARE DONE
     // WITH TESTING WE CAN DELETE THIS FILE AND NOT CARE ABOUT MERGE CONFLICTS HERE
-
     [ApiController]
     [Route("api/[controller]")]
     public class TestController : ControllerBase
@@ -37,7 +36,9 @@ namespace BankApp.Server.Controllers
             {
                 var user = userDao.FindByEmail(email);
                 if (user == null)
+                {
                     return NotFound(new { error = $"User with email '{email}' not found" });
+                }
 
                 return Ok(new
                 {

@@ -6,50 +6,50 @@ namespace BankApp.Server.Repositories.Implementations
 {
     public class CardRepository : ICardRepository
     {
-        private readonly ICardDAO _cardDao;
-        private readonly IAccountDAO _accountDao;
-        private readonly IUserCardPreferenceDAO _userCardPreferenceDao;
+        private readonly ICardDAO cardDao;
+        private readonly IAccountDAO accountDao;
+        private readonly IUserCardPreferenceDAO userCardPreferenceDao;
 
         public CardRepository(ICardDAO cardDao, IAccountDAO accountDao, IUserCardPreferenceDAO userCardPreferenceDao)
         {
-            _cardDao = cardDao;
-            _accountDao = accountDao;
-            _userCardPreferenceDao = userCardPreferenceDao;
+            this.cardDao = cardDao;
+            this.accountDao = accountDao;
+            this.userCardPreferenceDao = userCardPreferenceDao;
         }
 
         public List<Card> GetCardsByUserId(int userId)
         {
-            return _cardDao.FindByUserId(userId);
+            return cardDao.FindByUserId(userId);
         }
 
         public Card? GetCardById(int cardId)
         {
-            return _cardDao.FindById(cardId);
+            return cardDao.FindById(cardId);
         }
 
         public Account? GetAccountById(int accountId)
         {
-            return _accountDao.FindById(accountId);
+            return accountDao.FindById(accountId);
         }
 
         public UserCardPreference? GetSortPreference(int userId)
         {
-            return _userCardPreferenceDao.FindByUserId(userId);
+            return userCardPreferenceDao.FindByUserId(userId);
         }
 
         public bool SaveSortPreference(int userId, string sortOption)
         {
-            return _userCardPreferenceDao.Upsert(userId, sortOption);
+            return userCardPreferenceDao.Upsert(userId, sortOption);
         }
 
         public bool UpdateStatus(int cardId, string status)
         {
-            return _cardDao.UpdateStatus(cardId, status);
+            return cardDao.UpdateStatus(cardId, status);
         }
 
         public bool UpdateSettings(int cardId, decimal? spendingLimit, bool isOnlinePaymentsEnabled, bool isContactlessPaymentsEnabled)
         {
-            return _cardDao.UpdateSettings(cardId, spendingLimit, isOnlinePaymentsEnabled, isContactlessPaymentsEnabled);
+            return cardDao.UpdateSettings(cardId, spendingLimit, isOnlinePaymentsEnabled, isContactlessPaymentsEnabled);
         }
     }
 }

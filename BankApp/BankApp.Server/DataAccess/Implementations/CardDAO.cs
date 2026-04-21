@@ -5,26 +5,26 @@ namespace BankApp.Server.DataAccess.Implementations
 {
     public class CardDAO : ICardDAO
     {
-        private readonly AppDbContext _dbContext;
+        private readonly AppDbContext dbContext;
 
         public CardDAO(AppDbContext dbContext)
         {
-            _dbContext = dbContext;
+            this.dbContext = dbContext;
         }
 
         public Card? FindById(int id)
         {
             const string query = @"SELECT * FROM Card WHERE Id = @p0";
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { id });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { id });
             return reader.Read() ? MapToCard(reader) : null;
         }
 
         public List<Card> FindByUserId(int userId)
         {
-            List<Card> cards = new();
+            List<Card> cards = new ();
             const string query = @"SELECT * FROM Card WHERE UserId = @p0 ORDER BY SortOrder, CreatedAt";
 
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { userId });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { userId });
             while (reader.Read())
             {
                 cards.Add(MapToCard(reader));
@@ -40,7 +40,7 @@ namespace BankApp.Server.DataAccess.Implementations
                 SET Status = @p1
                 WHERE Id = @p0";
 
-            return _dbContext.ExecuteNonQuery(query, new object[] { cardId, status }) > 0;
+            return dbContext.ExecuteNonQuery(query, new object[] { cardId, status }) > 0;
         }
 
         public bool UpdateSettings(int cardId, decimal? spendingLimit, bool isOnlinePaymentsEnabled, bool isContactlessPaymentsEnabled)
@@ -52,7 +52,7 @@ namespace BankApp.Server.DataAccess.Implementations
                     IsContactlessEnabled = @p3
                 WHERE Id = @p0";
 
-            return _dbContext.ExecuteNonQuery(query, new object[] { cardId, spendingLimit, isOnlinePaymentsEnabled, isContactlessPaymentsEnabled }) > 0;
+            return dbContext.ExecuteNonQuery(query, new object[] { cardId, spendingLimit, isOnlinePaymentsEnabled, isContactlessPaymentsEnabled }) > 0;
         }
 
         private static Card MapToCard(System.Data.IDataReader reader)

@@ -6,34 +6,34 @@ namespace BankApp.Server.Repositories.Implementations
 {
 	public class DashboardRepository : IDashboardRepository
 	{
-		private readonly IAccountDAO _accountDAO;
-		private readonly ICardDAO _cardDAO;
-		private readonly ITransactionDAO _transactionDAO;
-		private readonly INotificationDAO _notificationDAO;
+		private readonly IAccountDAO accountDAO;
+		private readonly ICardDAO cardDAO;
+		private readonly ITransactionDAO transactionDAO;
+		private readonly INotificationDAO notificationDAO;
 
 		public DashboardRepository(IAccountDAO accountDAO, ICardDAO cardDAO, ITransactionDAO transactionDAO, INotificationDAO notificationDAO)
 		{
-			_accountDAO = accountDAO;
-			_cardDAO = cardDAO;
-			_transactionDAO = transactionDAO;
-			_notificationDAO = notificationDAO;
+			this.accountDAO = accountDAO;
+			this.cardDAO = cardDAO;
+			this.transactionDAO = transactionDAO;
+			this.notificationDAO = notificationDAO;
 		}
 
 		public List<Account> GetAccountsByUser(int userId)
 		{
-			return _accountDAO.FindByUserId(userId);
+			return accountDAO.FindByUserId(userId);
 		}
 		public List<Card> GetCardsByUser(int userId)
 		{
-			return _cardDAO.FindByUserId(userId);
+			return cardDAO.FindByUserId(userId);
 		}
 		public List<Transaction> GetRecentTransactions(int accountId, int limit = 10)
 		{
-			return _transactionDAO.FindRecentByAccountId(accountId, limit);
+			return transactionDAO.FindRecentByAccountId(accountId, limit);
 		}
 		public int GetUnreadNotificationCount(int userId)
 		{
-			return _notificationDAO.CountUnreadByUserId(userId);
+			return notificationDAO.CountUnreadByUserId(userId);
 		}
 	}
 }

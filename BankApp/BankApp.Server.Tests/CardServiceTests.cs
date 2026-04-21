@@ -77,7 +77,7 @@ public class CardServiceTests
 
         Assert.False(response.Success);
         Assert.True(response.RequiresOtp);
-        emailServiceMock.Verify(service => service.sendOTPCode(user.Email, "123456"), Times.Once);
+        emailServiceMock.Verify(service => service.SendOTPCode(user.Email, "123456"), Times.Once);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class CardServiceTests
         Assert.Null(response.SensitiveDetails);
         Assert.Contains("Password verification failed", response.Message);
         otpServiceMock.Verify(service => service.VerifyTOTP(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
-        emailServiceMock.Verify(service => service.sendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        emailServiceMock.Verify(service => service.SendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
@@ -152,7 +152,7 @@ public class CardServiceTests
         Assert.Equal(card.CVV, response.SensitiveDetails.Cvv);
         otpServiceMock.Verify(service => service.VerifyTOTP(user.Id, "654321"), Times.Once);
         otpServiceMock.Verify(service => service.InvalidateOTP(user.Id), Times.Once);
-        emailServiceMock.Verify(service => service.sendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        emailServiceMock.Verify(service => service.SendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]

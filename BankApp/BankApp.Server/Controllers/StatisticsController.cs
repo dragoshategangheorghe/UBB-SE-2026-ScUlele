@@ -7,37 +7,37 @@ namespace BankApp.Server.Controllers
     [Route("api/[controller]")]
     public class StatisticsController : ControllerBase
     {
-        private readonly IStatisticsService _statisticsService;
+        private readonly IStatisticsService statisticsService;
 
         public StatisticsController(IStatisticsService statisticsService)
         {
-            _statisticsService = statisticsService;
+            this.statisticsService = statisticsService;
         }
 
-        private int GetAuthenticatedUserId() => (int)HttpContext.Items["UserId"]!;
+        private int GetAuthenticatedUserId() => (int)HttpContext.Items["UserId"] !;
 
         [HttpGet("spending-by-category")]
         public IActionResult GetSpendingByCategory()
         {
-            return Ok(_statisticsService.GetSpendingByCategory(GetAuthenticatedUserId()));
+            return Ok(statisticsService.GetSpendingByCategory(GetAuthenticatedUserId()));
         }
 
         [HttpGet("income-vs-expenses")]
         public IActionResult GetIncomeVsExpenses()
         {
-            return Ok(_statisticsService.GetIncomeVsExpenses(GetAuthenticatedUserId()));
+            return Ok(statisticsService.GetIncomeVsExpenses(GetAuthenticatedUserId()));
         }
 
         [HttpGet("balance-trends")]
         public IActionResult GetBalanceTrends()
         {
-            return Ok(_statisticsService.GetBalanceTrends(GetAuthenticatedUserId()));
+            return Ok(statisticsService.GetBalanceTrends(GetAuthenticatedUserId()));
         }
 
         [HttpGet("top-recipients")]
         public IActionResult GetTopRecipients()
         {
-            return Ok(_statisticsService.GetTopRecipients(GetAuthenticatedUserId()));
+            return Ok(statisticsService.GetTopRecipients(GetAuthenticatedUserId()));
         }
     }
 }
