@@ -13,7 +13,7 @@ namespace BankApp.Server.Tests;
 public class CardServiceTests
 {
     [Fact]
-    public void RevealSensitiveDetails_ReturnsCardNumberAndCvv_WhenPasswordMatchesAndTwoFactorDisabled()
+    public void RevealSensitiveDetails_PasswordMatchesAndTwoFactorDisabled_ReturnsSensitiveDetails()
     {
         Mock<ICardRepository> cardRepositoryMock = new ();
         Mock<IUserRepository> userRepositoryMock = new ();
@@ -47,7 +47,7 @@ public class CardServiceTests
     }
 
     [Fact]
-    public void RevealSensitiveDetails_RequiresOtp_WhenTwoFactorEnabledAndOtpMissing()
+    public void RevealSensitiveDetails_TwoFactorEnabledAndOtpMissing_RequiresOtp()
     {
         Mock<ICardRepository> cardRepositoryMock = new ();
         Mock<IUserRepository> userRepositoryMock = new ();
@@ -81,7 +81,7 @@ public class CardServiceTests
     }
 
     [Fact]
-    public void RevealSensitiveDetails_ReturnsFailure_WhenPasswordDoesNotMatch()
+    public void RevealSensitiveDetails_PasswordDoesNotMatch_ReturnsFailure()
     {
         Mock<ICardRepository> cardRepositoryMock = new ();
         Mock<IUserRepository> userRepositoryMock = new ();
@@ -117,7 +117,7 @@ public class CardServiceTests
     }
 
     [Fact]
-    public void RevealSensitiveDetails_ReturnsSensitiveDetails_WhenTwoFactorEnabledAndOtpMatches()
+    public void RevealSensitiveDetails_TwoFactorEnabledAndOtpMatches_ReturnsSensitiveDetails()
     {
         Mock<ICardRepository> cardRepositoryMock = new ();
         Mock<IUserRepository> userRepositoryMock = new ();
@@ -156,7 +156,7 @@ public class CardServiceTests
     }
 
     [Fact]
-    public void FreezeCard_UpdatesStatus_WhenOwnedCardExists()
+    public void FreezeCard_OwnedFrozenCardExists_UpdatesStatus()
     {
         Mock<ICardRepository> cardRepositoryMock = new ();
         Mock<IUserRepository> userRepositoryMock = new ();
@@ -197,7 +197,7 @@ public class CardServiceTests
     }
 
     [Fact]
-    public void UnfreezeCard_UpdatesStatus_WhenOwnedFrozenCardExists()
+    public void UnfreezeCard_OwnedFrozenCardExists_UpdatesStatus()
     {
         Mock<ICardRepository> cardRepositoryMock = new ();
         Mock<IUserRepository> userRepositoryMock = new ();
@@ -242,7 +242,7 @@ public class CardServiceTests
     }
 
     [Fact]
-    public void UpdateSettings_ReturnsFailure_WhenSpendingLimitIsNegative()
+    public void UpdateSettings_SpendingLimitIsNegative_ReturnsFailure()
     {
         Mock<ICardRepository> cardRepositoryMock = new ();
         Mock<IUserRepository> userRepositoryMock = new ();
@@ -270,7 +270,7 @@ public class CardServiceTests
     }
 
     [Fact]
-    public void UpdateSettings_ReturnsFailure_WhenSpendingLimitExceedsConfiguredMaximum()
+    public void UpdateSettings_SpendingLimitExceedsConfiguredMaximum_ReturnsFailure()
     {
         Mock<ICardRepository> cardRepositoryMock = new ();
         Mock<IUserRepository> userRepositoryMock = new ();

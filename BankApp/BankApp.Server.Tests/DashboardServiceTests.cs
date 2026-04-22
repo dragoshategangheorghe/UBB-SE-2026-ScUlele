@@ -32,7 +32,7 @@ namespace BankApp.Server.Tests
         public void GetDashboardData_NoUserWithID_ReturnsNull()
         {
             int userId = 1;
-            mockUserRepository.FindById(userId).Returns((User)null);
+            mockUserRepository.FindById(userId).Returns((User)null!);
 
             DashboardResponse response = dashboardService.GetDashboardData(userId);
 
