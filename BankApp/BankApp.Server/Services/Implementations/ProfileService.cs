@@ -96,6 +96,7 @@ namespace BankApp.Server.Services.Implementations
             {
                 return false;
             }
+
             user.Is2FAEnabled = true;
             user.Preferred2FAMethod = method.ToString();
             return userRepository.UpdateUser(user);
