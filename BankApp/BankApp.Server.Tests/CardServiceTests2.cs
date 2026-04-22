@@ -89,11 +89,16 @@ namespace BankApp.Server.Tests
             Card card = CardServiceTests.CreateCard();
             mockCardRepository.GetCardById(card.Id).Returns(card);
             mockCardRepository
-                .UpdateSettings(card.Id, card.MonthlySpendingCap, card.IsOnlineEnabled, card.IsContactlessEnabled)
+                .UpdateSettings(card.Id, 1000m, true, true)
                 .Returns(true);
 
             CardCommandResponse cardCommandResponse =
-                cardService.UpdateSettings(card.UserId, card.Id, new UpdateCardSettingsRequest());
+                cardService.UpdateSettings(card.UserId, card.Id, new UpdateCardSettingsRequest
+                {
+                SpendingLimit = 1000m,
+                IsOnlinePaymentsEnabled = true,
+                IsContactlessPaymentsEnabled = true
+            });
 
             Assert.That(cardCommandResponse, Is.Not.Null);
             using (Assert.EnterMultipleScope())
