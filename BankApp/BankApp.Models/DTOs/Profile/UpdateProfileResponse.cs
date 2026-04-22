@@ -11,7 +11,9 @@ namespace BankApp.Models.DTOs.Profile
         public bool Success { get; set; }
         public string? Message { get; set; }
 
-        public UpdateProfileResponse() { }
+        public UpdateProfileResponse()
+        {
+        }
         public UpdateProfileResponse(bool success, string? message)
         {
             Success = success;

@@ -5,7 +5,7 @@ namespace BankApp.Models.DTOs.Cards
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
         public string SortOption { get; set; } = CardSortOptions.Custom;
-        public List<CardSummaryDto> Cards { get; set; } = new();
+        public List<CardSummaryDto> Cards { get; set; } = new ();
     }
 
     public class CardSummaryDto

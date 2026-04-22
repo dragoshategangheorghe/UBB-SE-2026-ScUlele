@@ -8,17 +8,20 @@ namespace BankApp.Server.Controllers
     [Route("api/[controller]")]
     public class DashboardController : ControllerBase
     {
-        private readonly IDashboardService _dashService;
-        public DashboardController(IDashboardService dashService) { _dashService = dashService; }
+        private readonly IDashboardService dashService;
+        public DashboardController(IDashboardService dashService)
+        {
+            this.dashService = dashService;
+        }
 
         [HttpGet]
         public IActionResult GetDashboard()
         {
             try
             {
-                int userId = (int)HttpContext.Items["UserId"]!;
+                int userId = (int)HttpContext.Items["UserId"] !;
 
-                DashboardResponse dashboardData = _dashService.GetDashboardData(userId);
+                DashboardResponse dashboardData = dashService.GetDashboardData(userId);
                 if (dashboardData == null)
                 {
                     return NotFound(new { message = "Dashboard data not found." });

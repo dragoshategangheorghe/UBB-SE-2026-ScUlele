@@ -1,9 +1,9 @@
-﻿using BankApp.Models.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BankApp.Models.Entities;
 
 namespace BankApp.Models.DTOs.Profile
 {
@@ -17,9 +17,9 @@ namespace BankApp.Models.DTOs.Profile
         public string? Nationality { get; set; }
         public bool Is2FAEnabled { get; set; }
 
-        public ProfileInfo() { }
-
-
+        public ProfileInfo()
+        {
+        }
 
         public ProfileInfo(User user)
         {

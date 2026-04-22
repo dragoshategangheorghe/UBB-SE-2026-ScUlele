@@ -7,35 +7,35 @@ namespace BankApp.Server.Repositories.Implementations
 {
     public class TransactionHistoryRepository : ITransactionHistoryRepository
     {
-        private readonly ITransactionDAO _transactionDao;
-        private readonly IAccountDAO _accountDao;
-        private readonly ICardDAO _cardDao;
+        private readonly ITransactionDAO transactionDao;
+        private readonly IAccountDAO accountDao;
+        private readonly ICardDAO cardDao;
 
         public TransactionHistoryRepository(ITransactionDAO transactionDao, IAccountDAO accountDao, ICardDAO cardDao)
         {
-            _transactionDao = transactionDao;
-            _accountDao = accountDao;
-            _cardDao = cardDao;
+            this.transactionDao = transactionDao;
+            this.accountDao = accountDao;
+            this.cardDao = cardDao;
         }
 
         public List<TransactionHistoryItemDto> GetTransactionsByUserId(int userId)
         {
-            return _transactionDao.FindByUserId(userId);
+            return transactionDao.FindByUserId(userId);
         }
 
         public TransactionHistoryItemDto? GetTransactionById(int userId, int transactionId)
         {
-            return _transactionDao.FindById(userId, transactionId);
+            return transactionDao.FindById(userId, transactionId);
         }
 
         public List<Account> GetAccountsByUserId(int userId)
         {
-            return _accountDao.FindByUserId(userId);
+            return accountDao.FindByUserId(userId);
         }
 
         public List<Card> GetCardsByUserId(int userId)
         {
-            return _cardDao.FindByUserId(userId);
+            return cardDao.FindByUserId(userId);
         }
     }
 }

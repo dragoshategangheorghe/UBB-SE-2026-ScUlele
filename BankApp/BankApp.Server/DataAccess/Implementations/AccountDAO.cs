@@ -1,26 +1,27 @@
-﻿using BankApp.Models.Entities;
+﻿using System.Data;
+using BankApp.Models.Entities;
 using BankApp.Server.DataAccess.Interfaces;
-using System.Data;
-
-
 namespace BankApp.Server.DataAccess.Implementations
 {
     public class AccountDAO : IAccountDAO
     {
-        private readonly AppDbContext _dbContext;
+        private readonly AppDbContext dbContext;
 
         public AccountDAO(AppDbContext dbContext)
         {
-            _dbContext = dbContext;
+            this.dbContext = dbContext;
         }
 
         public Account? FindById(int id)
         {
             var query =
                 @"SELECT Id, UserId, AccountName, IBAN, Currency, Balance, AccountType, Status, CreatedAt from Account where Id = @p0";
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { id });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { id });
             if (reader.Read())
+            {
                 return MapToAccount(reader);
+            }
+
             return null;
         }
 
@@ -29,7 +30,7 @@ namespace BankApp.Server.DataAccess.Implementations
             var accounts = new List<Account>();
             var query =
                 @"SELECT Id, UserId, AccountName, IBAN, Currency, Balance, AccountType, Status, CreatedAt from Account where UserId = @p0";
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { userId });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { userId });
             while (reader.Read())
             {
                 accounts.Add(MapToAccount(reader));

@@ -9,9 +9,12 @@ namespace BankApp.Server.Controllers
     [Route("api/[controller]")]
     public class ProfileController : ControllerBase
     {
-        private readonly IProfileService _profileService;
-        public ProfileController(IProfileService profileService) { _profileService = profileService; }
-        private int GetAuthenticatedUserId() => (int)HttpContext.Items["UserId"]!;
+        private readonly IProfileService profileService;
+        public ProfileController(IProfileService profileService)
+        {
+            this.profileService = profileService;
+        }
+        private int GetAuthenticatedUserId() => (int)HttpContext.Items["UserId"] !;
 
         // GET: api/profile
         [HttpGet]
@@ -19,7 +22,7 @@ namespace BankApp.Server.Controllers
         {
             int userId = GetAuthenticatedUserId();
 
-            User? user = _profileService.GetUserById(userId);
+            User? user = profileService.GetUserById(userId);
             if (user == null)
             {
                 return NotFound(new GetProfileResponse(false, "User not found."));
@@ -35,7 +38,7 @@ namespace BankApp.Server.Controllers
             int userId = GetAuthenticatedUserId();
             request.UserId = userId; // override whatever the client sent
 
-            UpdateProfileResponse response = _profileService.UpdatePersonalInfo(request);
+            UpdateProfileResponse response = profileService.UpdatePersonalInfo(request);
 
             if (!response.Success)
             {
@@ -52,7 +55,7 @@ namespace BankApp.Server.Controllers
             int userId = GetAuthenticatedUserId();
             request.UserId = userId; // override whatever the client sent
 
-            ChangePasswordResponse response = _profileService.ChangePassword(request);
+            ChangePasswordResponse response = profileService.ChangePassword(request);
 
             if (!response.Success)
             {
@@ -68,7 +71,7 @@ namespace BankApp.Server.Controllers
         {
             int userId = GetAuthenticatedUserId();
 
-            List<OAuthLink> links = _profileService.GetOAuthLinks(userId);
+            List<OAuthLink> links = profileService.GetOAuthLinks(userId);
 
             if (links.Count == 0)
             {
@@ -84,7 +87,7 @@ namespace BankApp.Server.Controllers
         {
             int userId = GetAuthenticatedUserId();
 
-            List<NotificationPreference> prefs = _profileService.GetNotificationPreferences(userId);
+            List<NotificationPreference> prefs = profileService.GetNotificationPreferences(userId);
 
             if (prefs.Count == 0)
             {
@@ -100,7 +103,7 @@ namespace BankApp.Server.Controllers
         {
             int userId = GetAuthenticatedUserId();
 
-            bool success = _profileService.UpdateNotificationPreferences(userId, prefs);
+            bool success = profileService.UpdateNotificationPreferences(userId, prefs);
 
             if (!success)
             {
@@ -116,7 +119,7 @@ namespace BankApp.Server.Controllers
         {
             int userId = GetAuthenticatedUserId();
 
-            bool success = _profileService.VerifyPassword(userId, password);
+            bool success = profileService.VerifyPassword(userId, password);
 
             if (!success)
             {
@@ -132,10 +135,12 @@ namespace BankApp.Server.Controllers
         {
             int userId = GetAuthenticatedUserId();
 
-            bool success = _profileService.Enable2FA(userId, request.Method);
+            bool success = profileService.Enable2FA(userId, request.Method);
 
             if (!success)
+            {
                 return BadRequest(new Toggle2FAResponse { Success = false });
+            }
 
             return Ok(new Toggle2FAResponse { Success = true });
         }
@@ -146,10 +151,12 @@ namespace BankApp.Server.Controllers
         {
             int userId = GetAuthenticatedUserId();
 
-            bool success = _profileService.Disable2FA(userId);
+            bool success = profileService.Disable2FA(userId);
 
             if (!success)
+            {
                 return BadRequest(new Toggle2FAResponse { Success = false });
+            }
 
             return Ok(new Toggle2FAResponse { Success = true });
         }

@@ -1,4 +1,9 @@
 ﻿namespace BankApp.Models.Enums
 {
-    public enum TwoFactorMethod { Email, Authenticator, Phone }
+    public enum TwoFactorMethod
+    {
+        Email,
+        Authenticator,
+        Phone
+    }
 }

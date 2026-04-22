@@ -13,13 +13,13 @@ namespace BankApp.Server.Tests;
 public class CardServiceTests
 {
     [Fact]
-    public void RevealSensitiveDetails_ReturnsCardNumberAndCvv_WhenPasswordMatchesAndTwoFactorDisabled()
+    public void RevealSensitiveDetails_PasswordMatchesAndTwoFactorDisabled_ReturnsSensitiveDetails()
     {
-        Mock<ICardRepository> cardRepositoryMock = new();
-        Mock<IUserRepository> userRepositoryMock = new();
-        Mock<IHashService> hashServiceMock = new();
-        Mock<IOTPService> otpServiceMock = new();
-        Mock<IEmailService> emailServiceMock = new();
+        Mock<ICardRepository> cardRepositoryMock = new ();
+        Mock<IUserRepository> userRepositoryMock = new ();
+        Mock<IHashService> hashServiceMock = new ();
+        Mock<IOTPService> otpServiceMock = new ();
+        Mock<IEmailService> emailServiceMock = new ();
 
         Card card = CreateCard();
         User user = CreateUser(isTwoFactorEnabled: false);
@@ -47,13 +47,13 @@ public class CardServiceTests
     }
 
     [Fact]
-    public void RevealSensitiveDetails_RequiresOtp_WhenTwoFactorEnabledAndOtpMissing()
+    public void RevealSensitiveDetails_TwoFactorEnabledAndOtpMissing_RequiresOtp()
     {
-        Mock<ICardRepository> cardRepositoryMock = new();
-        Mock<IUserRepository> userRepositoryMock = new();
-        Mock<IHashService> hashServiceMock = new();
-        Mock<IOTPService> otpServiceMock = new();
-        Mock<IEmailService> emailServiceMock = new();
+        Mock<ICardRepository> cardRepositoryMock = new ();
+        Mock<IUserRepository> userRepositoryMock = new ();
+        Mock<IHashService> hashServiceMock = new ();
+        Mock<IOTPService> otpServiceMock = new ();
+        Mock<IEmailService> emailServiceMock = new ();
 
         Card card = CreateCard();
         User user = CreateUser(isTwoFactorEnabled: true);
@@ -77,17 +77,17 @@ public class CardServiceTests
 
         Assert.False(response.Success);
         Assert.True(response.RequiresOtp);
-        emailServiceMock.Verify(service => service.sendOTPCode(user.Email, "123456"), Times.Once);
+        emailServiceMock.Verify(service => service.SendOTPCode(user.Email, "123456"), Times.Once);
     }
 
     [Fact]
-    public void RevealSensitiveDetails_ReturnsFailure_WhenPasswordDoesNotMatch()
+    public void RevealSensitiveDetails_PasswordDoesNotMatch_ReturnsFailure()
     {
-        Mock<ICardRepository> cardRepositoryMock = new();
-        Mock<IUserRepository> userRepositoryMock = new();
-        Mock<IHashService> hashServiceMock = new();
-        Mock<IOTPService> otpServiceMock = new();
-        Mock<IEmailService> emailServiceMock = new();
+        Mock<ICardRepository> cardRepositoryMock = new ();
+        Mock<IUserRepository> userRepositoryMock = new ();
+        Mock<IHashService> hashServiceMock = new ();
+        Mock<IOTPService> otpServiceMock = new ();
+        Mock<IEmailService> emailServiceMock = new ();
 
         Card card = CreateCard();
         User user = CreateUser(isTwoFactorEnabled: false);
@@ -113,17 +113,17 @@ public class CardServiceTests
         Assert.Null(response.SensitiveDetails);
         Assert.Contains("Password verification failed", response.Message);
         otpServiceMock.Verify(service => service.VerifyTOTP(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
-        emailServiceMock.Verify(service => service.sendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        emailServiceMock.Verify(service => service.SendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
-    public void RevealSensitiveDetails_ReturnsSensitiveDetails_WhenTwoFactorEnabledAndOtpMatches()
+    public void RevealSensitiveDetails_TwoFactorEnabledAndOtpMatches_ReturnsSensitiveDetails()
     {
-        Mock<ICardRepository> cardRepositoryMock = new();
-        Mock<IUserRepository> userRepositoryMock = new();
-        Mock<IHashService> hashServiceMock = new();
-        Mock<IOTPService> otpServiceMock = new();
-        Mock<IEmailService> emailServiceMock = new();
+        Mock<ICardRepository> cardRepositoryMock = new ();
+        Mock<IUserRepository> userRepositoryMock = new ();
+        Mock<IHashService> hashServiceMock = new ();
+        Mock<IOTPService> otpServiceMock = new ();
+        Mock<IEmailService> emailServiceMock = new ();
 
         Card card = CreateCard();
         User user = CreateUser(isTwoFactorEnabled: true);
@@ -152,17 +152,17 @@ public class CardServiceTests
         Assert.Equal(card.CVV, response.SensitiveDetails.Cvv);
         otpServiceMock.Verify(service => service.VerifyTOTP(user.Id, "654321"), Times.Once);
         otpServiceMock.Verify(service => service.InvalidateOTP(user.Id), Times.Once);
-        emailServiceMock.Verify(service => service.sendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        emailServiceMock.Verify(service => service.SendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
-    public void FreezeCard_UpdatesStatus_WhenOwnedCardExists()
+    public void FreezeCard_OwnedFrozenCardExists_UpdatesStatus()
     {
-        Mock<ICardRepository> cardRepositoryMock = new();
-        Mock<IUserRepository> userRepositoryMock = new();
-        Mock<IHashService> hashServiceMock = new();
-        Mock<IOTPService> otpServiceMock = new();
-        Mock<IEmailService> emailServiceMock = new();
+        Mock<ICardRepository> cardRepositoryMock = new ();
+        Mock<IUserRepository> userRepositoryMock = new ();
+        Mock<IHashService> hashServiceMock = new ();
+        Mock<IOTPService> otpServiceMock = new ();
+        Mock<IEmailService> emailServiceMock = new ();
 
         Card card = CreateCard();
         cardRepositoryMock.Setup(repository => repository.GetCardById(card.Id)).Returns(card);
@@ -197,13 +197,13 @@ public class CardServiceTests
     }
 
     [Fact]
-    public void UnfreezeCard_UpdatesStatus_WhenOwnedFrozenCardExists()
+    public void UnfreezeCard_OwnedFrozenCardExists_UpdatesStatus()
     {
-        Mock<ICardRepository> cardRepositoryMock = new();
-        Mock<IUserRepository> userRepositoryMock = new();
-        Mock<IHashService> hashServiceMock = new();
-        Mock<IOTPService> otpServiceMock = new();
-        Mock<IEmailService> emailServiceMock = new();
+        Mock<ICardRepository> cardRepositoryMock = new ();
+        Mock<IUserRepository> userRepositoryMock = new ();
+        Mock<IHashService> hashServiceMock = new ();
+        Mock<IOTPService> otpServiceMock = new ();
+        Mock<IEmailService> emailServiceMock = new ();
 
         Card frozenCard = CreateCard();
         frozenCard.Status = "Frozen";
@@ -242,13 +242,13 @@ public class CardServiceTests
     }
 
     [Fact]
-    public void UpdateSettings_ReturnsFailure_WhenSpendingLimitIsNegative()
+    public void UpdateSettings_SpendingLimitIsNegative_ReturnsFailure()
     {
-        Mock<ICardRepository> cardRepositoryMock = new();
-        Mock<IUserRepository> userRepositoryMock = new();
-        Mock<IHashService> hashServiceMock = new();
-        Mock<IOTPService> otpServiceMock = new();
-        Mock<IEmailService> emailServiceMock = new();
+        Mock<ICardRepository> cardRepositoryMock = new ();
+        Mock<IUserRepository> userRepositoryMock = new ();
+        Mock<IHashService> hashServiceMock = new ();
+        Mock<IOTPService> otpServiceMock = new ();
+        Mock<IEmailService> emailServiceMock = new ();
 
         Card card = CreateCard();
         cardRepositoryMock.Setup(repository => repository.GetCardById(card.Id)).Returns(card);
@@ -270,18 +270,18 @@ public class CardServiceTests
     }
 
     [Fact]
-    public void UpdateSettings_ReturnsFailure_WhenSpendingLimitExceedsConfiguredMaximum()
+    public void UpdateSettings_SpendingLimitExceedsConfiguredMaximum_ReturnsFailure()
     {
-        Mock<ICardRepository> cardRepositoryMock = new();
-        Mock<IUserRepository> userRepositoryMock = new();
-        Mock<IHashService> hashServiceMock = new();
-        Mock<IOTPService> otpServiceMock = new();
-        Mock<IEmailService> emailServiceMock = new();
+        Mock<ICardRepository> cardRepositoryMock = new ();
+        Mock<IUserRepository> userRepositoryMock = new ();
+        Mock<IHashService> hashServiceMock = new ();
+        Mock<IOTPService> otpServiceMock = new ();
+        Mock<IEmailService> emailServiceMock = new ();
 
         Card card = CreateCard();
         cardRepositoryMock.Setup(repository => repository.GetCardById(card.Id)).Returns(card);
 
-        CardService service = new(
+        CardService service = new (
             cardRepositoryMock.Object,
             userRepositoryMock.Object,
             hashServiceMock.Object,
@@ -304,7 +304,7 @@ public class CardServiceTests
             Times.Never);
     }
 
-    private static CardService CreateService(
+    public static CardService CreateService(
         Mock<ICardRepository> cardRepositoryMock,
         Mock<IUserRepository> userRepositoryMock,
         Mock<IHashService> hashServiceMock,
@@ -320,7 +320,7 @@ public class CardServiceTests
             Options.Create(new TeamCOptions()));
     }
 
-    private static Card CreateCard()
+    public static Card CreateCard()
     {
         return new Card
         {
@@ -340,7 +340,7 @@ public class CardServiceTests
         };
     }
 
-    private static User CreateUser(bool isTwoFactorEnabled)
+    public static User CreateUser(bool isTwoFactorEnabled)
     {
         return new User
         {

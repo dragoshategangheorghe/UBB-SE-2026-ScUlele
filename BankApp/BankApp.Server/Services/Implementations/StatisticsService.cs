@@ -9,13 +9,13 @@ namespace BankApp.Server.Services.Implementations
 {
     public class StatisticsService : IStatisticsService
     {
-        private readonly ITransactionHistoryRepository _transactionHistoryRepository;
-        private readonly TeamCOptions _options;
+        private readonly ITransactionHistoryRepository transactionHistoryRepository;
+        private readonly TeamCOptions options;
 
         public StatisticsService(ITransactionHistoryRepository transactionHistoryRepository, IOptions<TeamCOptions> options)
         {
-            _transactionHistoryRepository = transactionHistoryRepository;
-            _options = options.Value;
+            this.transactionHistoryRepository = transactionHistoryRepository;
+            this.options = options.Value;
         }
 
         public SpendingByCategoryResponse GetSpendingByCategory(int userId)
@@ -67,8 +67,8 @@ namespace BankApp.Server.Services.Implementations
 
         public BalanceTrendsResponse GetBalanceTrends(int userId)
         {
-            //the previous one had something with the current date, which made it fail when we received it
-            //maybe it worked when the other team was working on it, replaced it with a fixed DateTime
+            // the previous one had something with the current date, which made it fail when we received it
+            // maybe it worked when the other team was working on it, replaced it with a fixed DateTime
             DateTime cutoffDate = new DateTime(2026, 3, 24, 0, 0, 0, DateTimeKind.Utc);
             List<BalanceTrendPointDto> points = GetAnalyticsTransactions(userId)
                 .Where(transaction => transaction.Timestamp.Date >= cutoffDate)
@@ -104,7 +104,7 @@ namespace BankApp.Server.Services.Implementations
                 })
                 .OrderByDescending(recipient => recipient.TotalAmount)
                 .ThenBy(recipient => recipient.Name, StringComparer.OrdinalIgnoreCase)
-                .Take(_options.TopRecipientsCount)
+                .Take(options.TopRecipientsCount)
                 .ToList();
 
             return new TopRecipientsResponse
@@ -117,7 +117,7 @@ namespace BankApp.Server.Services.Implementations
 
         private List<TransactionHistoryItemDto> GetAnalyticsTransactions(int userId)
         {
-            return _transactionHistoryRepository.GetTransactionsByUserId(userId)
+            return transactionHistoryRepository.GetTransactionsByUserId(userId)
                 .Where(transaction => !IsFailed(transaction.Status))
                 .ToList();
         }

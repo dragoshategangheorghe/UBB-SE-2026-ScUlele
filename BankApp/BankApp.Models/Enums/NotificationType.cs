@@ -2,5 +2,10 @@
 
 public enum NotificationType
 {
-    Payment, OutboundTransfer, InboundTransfer, LowBalance, DuePayment, SuspiciousActivity
+    Payment,
+    OutboundTransfer,
+    InboundTransfer,
+    LowBalance,
+    DuePayment,
+    SuspiciousActivity
 }

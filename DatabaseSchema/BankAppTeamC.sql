@@ -1,3 +1,7 @@
+USE BankAppDb
+GO
+
+
 IF NOT EXISTS (
     SELECT 1
     FROM sys.tables

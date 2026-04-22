@@ -6,11 +6,11 @@ namespace BankApp.Server.DataAccess.Implementations
 {
     public class UserCardPreferenceDAO : IUserCardPreferenceDAO
     {
-        private readonly AppDbContext _dbContext;
+        private readonly AppDbContext dbContext;
 
         public UserCardPreferenceDAO(AppDbContext dbContext)
         {
-            _dbContext = dbContext;
+            this.dbContext = dbContext;
         }
 
         public UserCardPreference? FindByUserId(int userId)
@@ -20,7 +20,7 @@ namespace BankApp.Server.DataAccess.Implementations
                 FROM UserCardPreference
                 WHERE UserId = @p0";
 
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { userId });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { userId });
             return reader.Read() ? MapPreference(reader) : null;
         }
 
@@ -32,7 +32,7 @@ namespace BankApp.Server.DataAccess.Implementations
                     UpdatedAt = GETUTCDATE()
                 WHERE UserId = @p0";
 
-            int updatedRows = _dbContext.ExecuteNonQuery(updateQuery, new object[] { userId, sortOption });
+            int updatedRows = dbContext.ExecuteNonQuery(updateQuery, new object[] { userId, sortOption });
             if (updatedRows > 0)
             {
                 return true;
@@ -42,7 +42,7 @@ namespace BankApp.Server.DataAccess.Implementations
                 INSERT INTO UserCardPreference (UserId, SortOption)
                 VALUES (@p0, @p1)";
 
-            return _dbContext.ExecuteNonQuery(insertQuery, new object[] { userId, sortOption }) > 0;
+            return dbContext.ExecuteNonQuery(insertQuery, new object[] { userId, sortOption }) > 0;
         }
 
         private static UserCardPreference MapPreference(IDataReader reader)

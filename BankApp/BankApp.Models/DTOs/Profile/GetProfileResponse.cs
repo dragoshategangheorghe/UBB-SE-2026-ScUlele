@@ -1,9 +1,9 @@
-﻿using BankApp.Models.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BankApp.Models.Entities;
 
 namespace BankApp.Models.DTOs.Profile
 {
@@ -14,7 +14,9 @@ namespace BankApp.Models.DTOs.Profile
 
         public ProfileInfo? ProfileInfo { get; set; }
 
-        public GetProfileResponse() { }
+        public GetProfileResponse()
+        {
+        }
 
         public GetProfileResponse(bool success, string message)
         {

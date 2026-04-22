@@ -7,23 +7,23 @@ namespace BankApp.Server.DataAccess.Implementations
 {
     public class TransactionDAO : ITransactionDAO
     {
-        private readonly AppDbContext _dbContext;
+        private readonly AppDbContext dbContext;
 
         public TransactionDAO(AppDbContext dbContext)
         {
-            _dbContext = dbContext;
+            this.dbContext = dbContext;
         }
 
         public List<Transaction> FindRecentByAccountId(int accountId, int limit = 10)
         {
-            List<Transaction> transactions = new();
+            List<Transaction> transactions = new ();
             const string query = @"
                 SELECT TOP (@p1) *
                 FROM [Transaction]
                 WHERE AccountId = @p0
                 ORDER BY CreatedAt DESC";
 
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { accountId, limit });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { accountId, limit });
             while (reader.Read())
             {
                 transactions.Add(MapToTransaction(reader));
@@ -34,7 +34,7 @@ namespace BankApp.Server.DataAccess.Implementations
 
         public List<TransactionHistoryItemDto> FindByUserId(int userId)
         {
-            List<TransactionHistoryItemDto> transactions = new();
+            List<TransactionHistoryItemDto> transactions = new ();
             const string query = @"
                 SELECT
                     t.Id,
@@ -67,7 +67,7 @@ namespace BankApp.Server.DataAccess.Implementations
                 WHERE a.UserId = @p0
                 ORDER BY t.CreatedAt DESC, t.Id DESC";
 
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { userId });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { userId });
             while (reader.Read())
             {
                 transactions.Add(MapToTransactionHistoryItem(reader));
@@ -109,7 +109,7 @@ namespace BankApp.Server.DataAccess.Implementations
                 LEFT JOIN Category cat ON cat.Id = t.CategoryId
                 WHERE a.UserId = @p0 AND t.Id = @p1";
 
-            using var reader = _dbContext.ExecuteQuery(query, new object[] { userId, transactionId });
+            using var reader = dbContext.ExecuteQuery(query, new object[] { userId, transactionId });
             return reader.Read() ? MapToTransactionHistoryItem(reader) : null;
         }
 
