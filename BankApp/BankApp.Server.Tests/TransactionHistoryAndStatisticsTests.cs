@@ -10,7 +10,7 @@ using Xunit;
 
 namespace BankApp.Server.Tests;
 
-public class TransactionAndStatisticsTests
+public class TransactionHistoryAndStatisticsTests
 {
     [Fact]
     public void GetHistory_FiltersAndSortsTransactions_BySearchStatusDirectionAndAmount()
