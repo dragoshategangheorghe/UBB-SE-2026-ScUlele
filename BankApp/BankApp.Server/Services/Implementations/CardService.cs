@@ -75,7 +75,16 @@ namespace BankApp.Server.Services.Implementations
             User? user = userRepository.FindById(userId);
             Card? card = GetOwnedCard(userId, cardId);
 
-            if (user == null || card == null)
+            if (user == null)
+            {
+                return new RevealCardResponse
+                {
+                    Success = false,
+                    Message = "User not found."
+                };
+            }
+
+            if (card == null)
             {
                 return new RevealCardResponse
                 {
