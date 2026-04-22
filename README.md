@@ -186,11 +186,3 @@ Before presenting or merging final work, test from a clean clone:
 8. Start client
 9. Test Cards, Transfer History, Statistics, and Export
 ```
-
-## 10. NUnit Tests
-
-To run the NUnit Unit tests (not the xUnit ones), open a CLI in the `BankApp` folder and run the following command:
-
-```text
-dotnet test BankApp\BankApp.Server.Tests\BankApp.Server.Tests.csproj
-```

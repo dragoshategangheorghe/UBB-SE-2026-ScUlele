@@ -304,7 +304,7 @@ public class CardServiceTests
             Times.Never);
     }
 
-    public static CardService CreateService(
+    private static CardService CreateService(
         Mock<ICardRepository> cardRepositoryMock,
         Mock<IUserRepository> userRepositoryMock,
         Mock<IHashService> hashServiceMock,
@@ -320,7 +320,7 @@ public class CardServiceTests
             Options.Create(new TeamCOptions()));
     }
 
-    public static Card CreateCard()
+    private static Card CreateCard()
     {
         return new Card
         {
@@ -340,7 +340,7 @@ public class CardServiceTests
         };
     }
 
-    public static User CreateUser(bool isTwoFactorEnabled)
+    private static User CreateUser(bool isTwoFactorEnabled)
     {
         return new User
         {

@@ -56,7 +56,8 @@ public static class Program
             .GetTypes()
             .Where(type => type.IsClass && type.Namespace == typeof(Program).Namespace)
             .SelectMany(type => type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
-                .Where(method => method.GetParameters().Length == 0)
+                .Where(method => method.GetParameters().Length == 0 &&
+                                 method.GetCustomAttribute<Xunit.FactAttribute>() != null)
                 .Select(method => new TestCase(type, method)))
             .OrderBy(testCase => testCase.testClass.Name, StringComparer.Ordinal)
             .ThenBy(testCase => testCase.method.Name, StringComparer.Ordinal)
