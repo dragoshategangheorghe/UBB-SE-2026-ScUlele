@@ -1,355 +1,673 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using BankApp.Models.DTOs.Cards;
+using BankApp.Models.DTOs.Dashboard;
 using BankApp.Models.Entities;
 using BankApp.Server.Configuration;
 using BankApp.Server.Repositories.Interfaces;
 using BankApp.Server.Services.Implementations;
 using BankApp.Server.Services.Infrastructure.Interfaces;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualBasic.FileIO;
+using Microsoft.VisualStudio.TestPlatform.Common.Utilities;
 using Moq;
+using NSubstitute;
+using NUnit.Framework;
 using Xunit;
+using Assert = NUnit.Framework.Assert;
 
-namespace BankApp.Server.Tests;
-
-public class CardServiceTests
+namespace BankApp.Server.Tests
 {
-    [Fact]
-    public void RevealSensitiveDetails_PasswordMatchesAndTwoFactorDisabled_ReturnsSensitiveDetails()
+    [TestFixture]
+    public class CardServiceTests
     {
-        Mock<ICardRepository> cardRepositoryMock = new ();
-        Mock<IUserRepository> userRepositoryMock = new ();
-        Mock<IHashService> hashServiceMock = new ();
-        Mock<IOTPService> otpServiceMock = new ();
-        Mock<IEmailService> emailServiceMock = new ();
+        private ICardRepository mockCardRepository;
+        private IUserRepository mockUserRepository;
+        private IHashService mockHashService;
+        private IOTPService mockOtpService;
+        private IEmailService mockEmailService;
 
-        Card card = CreateCard();
-        User user = CreateUser(isTwoFactorEnabled: false);
+        private CardService cardService;
 
-        cardRepositoryMock.Setup(repository => repository.GetCardById(card.Id)).Returns(card);
-        userRepositoryMock.Setup(repository => repository.FindById(user.Id)).Returns(user);
-        hashServiceMock.Setup(service => service.Verify("secret", user.PasswordHash)).Returns(true);
-
-        CardService service = CreateService(
-            cardRepositoryMock,
-            userRepositoryMock,
-            hashServiceMock,
-            otpServiceMock,
-            emailServiceMock);
-
-        RevealCardResponse response = service.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+        [SetUp]
+        public void SetUp()
         {
-            Password = "secret"
-        });
+             mockCardRepository = Substitute.For<ICardRepository>();
+             mockUserRepository = Substitute.For<IUserRepository>();
+             mockHashService = Substitute.For<IHashService>();
+             mockOtpService = Substitute.For<IOTPService>();
+             mockEmailService = Substitute.For<IEmailService>();
 
-        Assert.True(response.Success);
-        Assert.NotNull(response.SensitiveDetails);
-        Assert.Equal(card.CardNumber, response.SensitiveDetails!.CardNumber);
-        Assert.Equal(card.CVV, response.SensitiveDetails.Cvv);
-    }
+             cardService = new CardService(
+                 mockCardRepository,
+                 mockUserRepository,
+                 mockHashService,
+                 mockOtpService,
+                 mockEmailService,
+                 Options.Create(new TeamCOptions()));
+        }
 
-    [Fact]
-    public void RevealSensitiveDetails_TwoFactorEnabledAndOtpMissing_RequiresOtp()
-    {
-        Mock<ICardRepository> cardRepositoryMock = new ();
-        Mock<IUserRepository> userRepositoryMock = new ();
-        Mock<IHashService> hashServiceMock = new ();
-        Mock<IOTPService> otpServiceMock = new ();
-        Mock<IEmailService> emailServiceMock = new ();
-
-        Card card = CreateCard();
-        User user = CreateUser(isTwoFactorEnabled: true);
-
-        cardRepositoryMock.Setup(repository => repository.GetCardById(card.Id)).Returns(card);
-        userRepositoryMock.Setup(repository => repository.FindById(user.Id)).Returns(user);
-        hashServiceMock.Setup(service => service.Verify("secret", user.PasswordHash)).Returns(true);
-        otpServiceMock.Setup(service => service.GenerateTOTP(user.Id)).Returns("123456");
-
-        CardService service = CreateService(
-            cardRepositoryMock,
-            userRepositoryMock,
-            hashServiceMock,
-            otpServiceMock,
-            emailServiceMock);
-
-        RevealCardResponse response = service.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+        [Test]
+        public void UpdateSettings_CardDoesNotExist_ReturnsFailure()
         {
-            Password = "secret"
-        });
+            int cardId = 1;
+            mockCardRepository.GetCardById(cardId).Returns((Card)null!);
+            CardCommandResponse cardCommandResponse =
+                cardService.UpdateSettings(2, cardId, new UpdateCardSettingsRequest());
 
-        Assert.False(response.Success);
-        Assert.True(response.RequiresOtp);
-        emailServiceMock.Verify(service => service.SendOTPCode(user.Email, "123456"), Times.Once);
-    }
-
-    [Fact]
-    public void RevealSensitiveDetails_PasswordDoesNotMatch_ReturnsFailure()
-    {
-        Mock<ICardRepository> cardRepositoryMock = new ();
-        Mock<IUserRepository> userRepositoryMock = new ();
-        Mock<IHashService> hashServiceMock = new ();
-        Mock<IOTPService> otpServiceMock = new ();
-        Mock<IEmailService> emailServiceMock = new ();
-
-        Card card = CreateCard();
-        User user = CreateUser(isTwoFactorEnabled: false);
-
-        cardRepositoryMock.Setup(repository => repository.GetCardById(card.Id)).Returns(card);
-        userRepositoryMock.Setup(repository => repository.FindById(user.Id)).Returns(user);
-        hashServiceMock.Setup(service => service.Verify("wrong-secret", user.PasswordHash)).Returns(false);
-
-        CardService service = CreateService(
-            cardRepositoryMock,
-            userRepositoryMock,
-            hashServiceMock,
-            otpServiceMock,
-            emailServiceMock);
-
-        RevealCardResponse response = service.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
-        {
-            Password = "wrong-secret"
-        });
-
-        Assert.False(response.Success);
-        Assert.False(response.RequiresOtp);
-        Assert.Null(response.SensitiveDetails);
-        Assert.Contains("Password verification failed", response.Message);
-        otpServiceMock.Verify(service => service.VerifyTOTP(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
-        emailServiceMock.Verify(service => service.SendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-    }
-
-    [Fact]
-    public void RevealSensitiveDetails_TwoFactorEnabledAndOtpMatches_ReturnsSensitiveDetails()
-    {
-        Mock<ICardRepository> cardRepositoryMock = new ();
-        Mock<IUserRepository> userRepositoryMock = new ();
-        Mock<IHashService> hashServiceMock = new ();
-        Mock<IOTPService> otpServiceMock = new ();
-        Mock<IEmailService> emailServiceMock = new ();
-
-        Card card = CreateCard();
-        User user = CreateUser(isTwoFactorEnabled: true);
-
-        cardRepositoryMock.Setup(repository => repository.GetCardById(card.Id)).Returns(card);
-        userRepositoryMock.Setup(repository => repository.FindById(user.Id)).Returns(user);
-        hashServiceMock.Setup(service => service.Verify("secret", user.PasswordHash)).Returns(true);
-        otpServiceMock.Setup(service => service.VerifyTOTP(user.Id, "654321")).Returns(true);
-
-        CardService service = CreateService(
-            cardRepositoryMock,
-            userRepositoryMock,
-            hashServiceMock,
-            otpServiceMock,
-            emailServiceMock);
-
-        RevealCardResponse response = service.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
-        {
-            Password = "secret",
-            OtpCode = "654321"
-        });
-
-        Assert.True(response.Success);
-        Assert.NotNull(response.SensitiveDetails);
-        Assert.Equal(card.CardNumber, response.SensitiveDetails!.CardNumber);
-        Assert.Equal(card.CVV, response.SensitiveDetails.Cvv);
-        otpServiceMock.Verify(service => service.VerifyTOTP(user.Id, "654321"), Times.Once);
-        otpServiceMock.Verify(service => service.InvalidateOTP(user.Id), Times.Once);
-        emailServiceMock.Verify(service => service.SendOTPCode(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-    }
-
-    [Fact]
-    public void FreezeCard_OwnedFrozenCardExists_UpdatesStatus()
-    {
-        Mock<ICardRepository> cardRepositoryMock = new ();
-        Mock<IUserRepository> userRepositoryMock = new ();
-        Mock<IHashService> hashServiceMock = new ();
-        Mock<IOTPService> otpServiceMock = new ();
-        Mock<IEmailService> emailServiceMock = new ();
-
-        Card card = CreateCard();
-        cardRepositoryMock.Setup(repository => repository.GetCardById(card.Id)).Returns(card);
-        cardRepositoryMock.Setup(repository => repository.UpdateStatus(card.Id, "Frozen")).Returns(true);
-        cardRepositoryMock.SetupSequence(repository => repository.GetCardById(card.Id))
-            .Returns(card)
-            .Returns(new Card
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
             {
-                Id = card.Id,
-                UserId = card.UserId,
-                AccountId = card.AccountId,
-                CardNumber = card.CardNumber,
-                CardholderName = card.CardholderName,
-                ExpiryDate = card.ExpiryDate,
-                CVV = card.CVV,
-                CardType = card.CardType,
-                CardBrand = card.CardBrand,
-                Status = "Frozen"
+                Assert.That(cardCommandResponse.Success, Is.False);
+                Assert.That(cardCommandResponse.Message, Is.EqualTo("Card not found."));
+            }
+        }
+
+        [Test]
+        public void UpdateSettings_CardSettingsFailToUpdateInCardRepository_ReturnsFailure()
+        {
+            Card card = CreateCard();
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockCardRepository
+                .UpdateSettings(card.Id, card.MonthlySpendingCap, card.IsOnlineEnabled, card.IsContactlessEnabled)
+                .Returns(false);
+
+            CardCommandResponse cardCommandResponse =
+                cardService.UpdateSettings(card.UserId, card.Id, new UpdateCardSettingsRequest());
+
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.False);
+                Assert.That(cardCommandResponse.Message, Is.EqualTo("Failed to update card settings."));
+            }
+        }
+
+        [Test]
+        public void UpdateSettings_CardExistsAndRepositoryUpdates_ReturnsSuccess()
+        {
+            Card card = CreateCard();
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockCardRepository
+                .UpdateSettings(card.Id, 1000m, true, true)
+                .Returns(true);
+
+            CardCommandResponse cardCommandResponse =
+                cardService.UpdateSettings(card.UserId, card.Id, new UpdateCardSettingsRequest
+                {
+                SpendingLimit = 1000m,
+                IsOnlinePaymentsEnabled = true,
+                IsContactlessPaymentsEnabled = true
             });
 
-        CardService service = CreateService(
-            cardRepositoryMock,
-            userRepositoryMock,
-            hashServiceMock,
-            otpServiceMock,
-            emailServiceMock);
-
-        CardCommandResponse response = service.FreezeCard(card.UserId, card.Id);
-
-        Assert.True(response.Success);
-        Assert.Equal("Frozen", response.Card!.Status);
-    }
-
-    [Fact]
-    public void UnfreezeCard_OwnedFrozenCardExists_UpdatesStatus()
-    {
-        Mock<ICardRepository> cardRepositoryMock = new ();
-        Mock<IUserRepository> userRepositoryMock = new ();
-        Mock<IHashService> hashServiceMock = new ();
-        Mock<IOTPService> otpServiceMock = new ();
-        Mock<IEmailService> emailServiceMock = new ();
-
-        Card frozenCard = CreateCard();
-        frozenCard.Status = "Frozen";
-
-        cardRepositoryMock.SetupSequence(repository => repository.GetCardById(frozenCard.Id))
-            .Returns(frozenCard)
-            .Returns(new Card
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
             {
-                Id = frozenCard.Id,
-                UserId = frozenCard.UserId,
-                AccountId = frozenCard.AccountId,
-                CardNumber = frozenCard.CardNumber,
-                CardholderName = frozenCard.CardholderName,
-                ExpiryDate = frozenCard.ExpiryDate,
-                CVV = frozenCard.CVV,
-                CardType = frozenCard.CardType,
-                CardBrand = frozenCard.CardBrand,
+                Assert.That(cardCommandResponse.Success, Is.True);
+                Assert.That(cardCommandResponse.Message, Is.EqualTo("Card settings updated successfully."));
+            }
+        }
+
+        [Test]
+        public void UpdateSortPreference_InvalidSortOption_ReturnsFailure()
+        {
+            User user = CreateUser(false);
+            UpdateCardSortPreferenceRequest sortRequest = new UpdateCardSortPreferenceRequest { SortOption = "wrong" };
+
+            CardCommandResponse cardCommandResponse = cardService.UpdateSortPreference(user.Id, sortRequest);
+
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.False);
+                Assert.That(cardCommandResponse.Message, Is.EqualTo("Unsupported card sort option."));
+            }
+        }
+        [Test]
+        public void UpdateSortPreference_SortOptionsFailToUpdateInCardRepositor_ReturnsFailure()
+        {
+            User user = CreateUser(false);
+            string validSortOption = CardSortOptions.ExpiryDate;
+            UpdateCardSortPreferenceRequest sortRequest = new UpdateCardSortPreferenceRequest { SortOption = validSortOption };
+
+            mockCardRepository.SaveSortPreference(user.Id, validSortOption).Returns(false);
+
+            CardCommandResponse cardCommandResponse = cardService.UpdateSortPreference(user.Id, sortRequest);
+
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.False);
+                Assert.That(cardCommandResponse.Message, Is.EqualTo("Failed to update card sort preference."));
+            }
+        }
+        [Test]
+        public void UpdateSortPreference_ValidSortOptionAndRepositoryUpdates_ReturnsSuccess()
+        {
+            User user = CreateUser(false);
+            string validSortOption = CardSortOptions.ExpiryDate;
+            UpdateCardSortPreferenceRequest sortRequest = new UpdateCardSortPreferenceRequest { SortOption = validSortOption };
+
+            mockCardRepository.SaveSortPreference(user.Id, validSortOption).Returns(true);
+
+            CardCommandResponse cardCommandResponse = cardService.UpdateSortPreference(user.Id, sortRequest);
+
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.True);
+                Assert.That(cardCommandResponse.Message, Is.EqualTo("Card sort preference updated successfully."));
+            }
+        }
+
+        [Test]
+        public void FreezeCard_OwnedUnfrozenCardExists_UpdatesStatus()
+        {
+            Card activeCard = CreateCard();
+            Card frozenCard = CreateCard(); // same data! Only status is changed
+            frozenCard.Status = "Frozen";
+
+            mockCardRepository.GetCardById(activeCard.Id).Returns(activeCard, frozenCard); // returns active then on the next call frozen
+            mockCardRepository.UpdateStatus(activeCard.Id, "Frozen").Returns(true);
+
+            CardCommandResponse cardCommandResponse = cardService.FreezeCard(activeCard.UserId, activeCard.Id);
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.True);
+                Assert.That(cardCommandResponse.Message, Is.EqualTo("Card frozen successfully."));
+                Assert.That(cardCommandResponse.Card?.Status, Is.EqualTo("Frozen"));
+            }
+        }
+
+        [Test]
+        public void UnfreezeCard_OwnedUnfrozenCardExists_UpdatesStatus()
+        {
+            Card activeCard = CreateCard();
+
+            mockCardRepository.GetCardById(activeCard.Id).Returns(activeCard, activeCard); // returns active then on the next call frozen
+            mockCardRepository.UpdateStatus(activeCard.Id, "Active").Returns(true);
+
+            CardCommandResponse cardCommandResponse = cardService.UnfreezeCard(activeCard.UserId, activeCard.Id);
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.True);
+                Assert.That(cardCommandResponse.Message, Is.EqualTo("Card unfrozen successfully."));
+                Assert.That(cardCommandResponse.Card?.Status, Is.EqualTo("Active"));
+            }
+        }
+        [Test]
+        public void FreezeCard_CardDoesNotExist_ReturnsFailure()
+        {
+            Card card = CreateCard();
+
+            mockCardRepository.GetCardById(card.Id).Returns((Card)null!);
+
+            CardCommandResponse cardCommandResponse = cardService.FreezeCard(card.UserId, card.Id);
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.False);
+                Assert.That(cardCommandResponse.Message, Is.EqualTo("Card not found."));
+            }
+        }
+
+        [Test]
+        public void UnreezeCard_CardDoesNotExist_ReturnsFailure()
+        {
+            Card card = CreateCard();
+
+            mockCardRepository.GetCardById(card.Id).Returns((Card)null!);
+
+            CardCommandResponse cardCommandResponse = cardService.UnfreezeCard(card.UserId, card.Id);
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.False);
+                Assert.That(cardCommandResponse.Message, Is.EqualTo("Card not found."));
+            }
+        }
+        [Test]
+        public void FreezeCard_RepositoryFailsToUpdate_ReturnsFailure()
+        {
+            Card card = CreateCard();
+
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockCardRepository.UpdateStatus(card.Id, "Frozen").Returns(false);
+
+            CardCommandResponse cardCommandResponse = cardService.FreezeCard(card.UserId, card.Id);
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.False);
+                Assert.That(cardCommandResponse.Message, Is.EqualTo("Failed to update card status."));
+            }
+        }
+        [Test]
+        public void UnfreezeCard_RepositoryFailsToUpdate_ReturnsFailure()
+        {
+            Card card = CreateCard();
+            card.Status = "Frozen";
+
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockCardRepository.UpdateStatus(card.Id, "Active").Returns(false);
+
+            CardCommandResponse cardCommandResponse = cardService.UnfreezeCard(card.UserId, card.Id);
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.False);
+                Assert.That(cardCommandResponse.Message, Is.EqualTo("Failed to update card status."));
+            }
+        }
+
+        [Test]
+        public void RevealSensitiveDetails_TwoFactorEnabledAndOtpDoesNotMatch_ReturnsSensitiveDetails()
+        {
+            Card card = CreateCard();
+            User user = CreateUser(isTwoFactorEnabled: true);
+
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockUserRepository.FindById(user.Id).Returns(user);
+            mockHashService.Verify("secret", user.PasswordHash).Returns(true);
+            mockOtpService.VerifyTOTP(user.Id, "67420").Returns(false);
+
+            RevealCardResponse revealCardResponse =
+            cardService.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+            {
+                Password = "secret",
+                OtpCode = "654321"
+            });
+
+            Assert.That(revealCardResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(revealCardResponse.Success, Is.False);
+                Assert.That(revealCardResponse.Message, Is.EqualTo("Invalid or expired OTP code."));
+            }
+        }
+
+        [Test]
+        public void RevealSensitiveDetails_UserDoesNotExist_ReturnsSensitiveDetails()
+        {
+            Card card = CreateCard();
+            User user = CreateUser(isTwoFactorEnabled: true);
+
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockUserRepository.FindById(user.Id).Returns((User)null!);
+            mockHashService.Verify("secret", user.PasswordHash).Returns(true);
+            mockOtpService.VerifyTOTP(user.Id, "67420").Returns(false);
+
+            RevealCardResponse revealCardResponse =
+                cardService.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+                {
+                    Password = "secret",
+                    OtpCode = "654321"
+                });
+
+            Assert.That(revealCardResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(revealCardResponse.Success, Is.False);
+                Assert.That(revealCardResponse.Message, Is.EqualTo("User not found."));
+            }
+        }
+
+        [Test]
+        public void RevealSensitiveDetails_CardDoesNotExist_ReturnsSensitiveDetails()
+        {
+            Card card = CreateCard();
+            User user = CreateUser(isTwoFactorEnabled: true);
+
+            mockCardRepository.GetCardById(card.Id).Returns((Card)null!);
+            mockUserRepository.FindById(user.Id).Returns(user);
+            mockHashService.Verify("secret", user.PasswordHash).Returns(true);
+            mockOtpService.VerifyTOTP(user.Id, "67420").Returns(false);
+
+            RevealCardResponse revealCardResponse =
+                cardService.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+                {
+                    Password = "secret",
+                    OtpCode = "654321"
+                });
+
+            Assert.That(revealCardResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(revealCardResponse.Success, Is.False);
+                Assert.That(revealCardResponse.Message, Is.EqualTo("Card not found."));
+            }
+        }
+        [Test]
+        public void RevealSensitiveDetails_PasswordMatchesAndTwoFactorDisabled_ReturnsSensitiveDetails()
+        {
+            Card card = CreateCard();
+            User user = CreateUser(isTwoFactorEnabled: false);
+
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockUserRepository.FindById(user.Id).Returns(user);
+            mockHashService.Verify("secret", user.PasswordHash).Returns(true);
+
+            RevealCardResponse revealCardResponse = cardService.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+            {
+                Password = "secret"
+            });
+
+            Assert.That(revealCardResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(revealCardResponse.Success, Is.True);
+                Assert.That(revealCardResponse.SensitiveDetails, Is.Not.Null);
+                Assert.That(revealCardResponse.SensitiveDetails!.CardNumber, Is.EqualTo(card.CardNumber));
+                Assert.That(revealCardResponse.SensitiveDetails!.Cvv, Is.EqualTo(card.CVV));
+            }
+        }
+
+        [Test]
+        public void RevealSensitiveDetails_TwoFactorEnabledAndOtpMissing_RequiresOtp()
+        {
+            Card card = CreateCard();
+            User user = CreateUser(isTwoFactorEnabled: true);
+
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockUserRepository.FindById(user.Id).Returns(user);
+            mockHashService.Verify("secret", user.PasswordHash).Returns(true);
+            mockOtpService.GenerateTOTP(user.Id).Returns("123456");
+
+            RevealCardResponse revealCardResponse = cardService.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+            {
+                Password = "secret"
+            });
+            Assert.That(revealCardResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(revealCardResponse.Success, Is.False);
+                Assert.That(revealCardResponse.RequiresOtp, Is.True);
+            }
+        }
+
+        public void RevealSensitiveDetails_TwoFactorEnabledAndOtpMissing_SendRequiredOtpToUser()
+        {
+            Card card = CreateCard();
+            User user = CreateUser(isTwoFactorEnabled: true);
+
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockUserRepository.FindById(user.Id).Returns(user);
+            mockHashService.Verify("secret", user.PasswordHash).Returns(true);
+            mockOtpService.GenerateTOTP(user.Id).Returns("123456");
+
+            RevealCardResponse revealCardResponse = cardService.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+            {
+                Password = "secret"
+            });
+
+            mockEmailService.Received(1).SendOTPCode(user.Email, "123456"); // acts as an assert !!
+        }
+
+        [Test]
+        public void RevealSensitiveDetails_PasswordDoesNotMatch_ReturnsFailure()
+        {
+            Card card = CreateCard();
+            User user = CreateUser(isTwoFactorEnabled: false);
+
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockUserRepository.FindById(user.Id).Returns(user);
+            mockHashService.Verify("wrong-secret", user.PasswordHash).Returns(false);
+
+            RevealCardResponse revealCardResponse = cardService.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+            {
+                Password = "wrong-secret"
+            });
+
+            Assert.That(revealCardResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(revealCardResponse.Success, Is.False);
+                Assert.That(revealCardResponse.RequiresOtp, Is.False);
+                Assert.That(revealCardResponse.SensitiveDetails, Is.Null);
+                Assert.That(revealCardResponse.Message, Does.Contain("Password verification failed"));
+            }
+        }
+
+        [Test]
+        public void RevealSensitiveDetails_PasswordDoesNotMatch_OTPCodeFunctionsAreNeverCalled()
+        {
+            Card card = CreateCard();
+            User user = CreateUser(isTwoFactorEnabled: false);
+
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockUserRepository.FindById(user.Id).Returns(user);
+            mockHashService.Verify("wrong-secret", user.PasswordHash).Returns(false);
+
+            RevealCardResponse revealCardResponse = cardService.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+            {
+                Password = "wrong-secret"
+            });
+
+            // these were NEVER called, we know it returns, and they are never called; but I think it's useful to test it and I also practice NSubstitute
+            mockOtpService.Received(0).VerifyTOTP(Arg.Any<int>(), Arg.Any<string>());
+            mockEmailService.Received(0).SendOTPCode(Arg.Any<string>(), Arg.Any<string>());
+        }
+
+        [Test]
+        public void RevealSensitiveDetails_TwoFactorEnabledAndOtpMatches_ReturnsSensitiveDetails()
+        {
+            Card card = CreateCard();
+            User user = CreateUser(isTwoFactorEnabled: true);
+
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockUserRepository.FindById(user.Id).Returns(user);
+            mockHashService.Verify("secret", user.PasswordHash).Returns(true);
+            mockOtpService.VerifyTOTP(user.Id, "654321").Returns(true);
+
+            RevealCardResponse revealCardResponse = cardService.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+            {
+                Password = "secret",
+                OtpCode = "654321"
+            });
+
+            Assert.That(revealCardResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(revealCardResponse.Success, Is.True);
+                Assert.That(revealCardResponse.RequiresOtp, Is.False);
+                Assert.That(revealCardResponse.SensitiveDetails, Is.Not.Null);
+                Assert.That(revealCardResponse.SensitiveDetails.CardNumber, Is.EqualTo(card.CardNumber));
+                Assert.That(revealCardResponse.SensitiveDetails.Cvv, Is.EqualTo(card.CVV));
+                Assert.That(revealCardResponse.Message, Is.EqualTo("Sensitive card details revealed successfully."));
+            }
+        }
+
+        [Test]
+        public void RevealSensitiveDetails_TwoFactorEnabledAndOtpMatches_VerifiesThenInvalidatesOTP()
+        {
+            Card card = CreateCard();
+            User user = CreateUser(isTwoFactorEnabled: true);
+
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockUserRepository.FindById(user.Id).Returns(user);
+            mockHashService.Verify("secret", user.PasswordHash).Returns(true);
+            mockOtpService.VerifyTOTP(user.Id, "654321").Returns(true);
+
+            RevealCardResponse revealCardResponse = cardService.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+            {
+                Password = "secret",
+                OtpCode = "654321"
+            });
+
+            Assert.That(revealCardResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(revealCardResponse.Success, Is.True);
+                Assert.That(revealCardResponse.RequiresOtp, Is.False);
+                Assert.That(revealCardResponse.SensitiveDetails, Is.Not.Null);
+                Assert.That(revealCardResponse.SensitiveDetails.CardNumber, Is.EqualTo(card.CardNumber));
+                Assert.That(revealCardResponse.SensitiveDetails.Cvv, Is.EqualTo(card.CVV));
+                Assert.That(revealCardResponse.Message, Is.EqualTo("Sensitive card details revealed successfully."));
+            }
+
+            mockOtpService.Received(1).VerifyTOTP(user.Id, "654321");
+            mockOtpService.Received(1).InvalidateOTP(user.Id);
+            mockEmailService.Received(0).SendOTPCode(Arg.Any<string>(), Arg.Any<string>()); // never sends another one
+        }
+
+        [Test]
+        public void FreezeCard_OwnedFrozenCardExists_UpdatesStatus()
+        {
+            Card frozenCard = CreateCard();
+            frozenCard.Status = "Frozen";
+
+            mockCardRepository.GetCardById(frozenCard.Id).Returns(frozenCard, frozenCard);
+            mockCardRepository.UpdateStatus(frozenCard.Id, "Frozen").Returns(true);
+
+            CardCommandResponse cardCommandResponse = cardService.FreezeCard(frozenCard.UserId, frozenCard.Id);
+
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+            Assert.That(cardCommandResponse.Success, Is.True);
+            Assert.That(cardCommandResponse.Card!.Status, Is.EqualTo("Frozen"));
+            }
+        }
+
+        [Test]
+        public void UnfreezeCard_OwnedFrozenCardExists_UpdatesStatus()
+        {
+            Card frozenCard = CreateCard();
+            frozenCard.Status = "Frozen";
+            Card activeCard = CreateCard(); // same card but Active = !Frozen
+
+            mockCardRepository.GetCardById(frozenCard.Id).Returns(frozenCard, activeCard);
+            mockCardRepository.UpdateStatus(frozenCard.Id, "Active").Returns(true);
+
+            CardCommandResponse cardCommandResponse = cardService.UnfreezeCard(frozenCard.UserId, frozenCard.Id);
+
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.True);
+                Assert.That(cardCommandResponse.Card!.Status, Is.EqualTo("Active"));
+            }
+        }
+
+        [Test]
+        public void UpdateSettings_SpendingLimitIsNegative_ReturnsFailure()
+        {
+            Card card = CreateCard();
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+
+            CardCommandResponse cardCommandResponse = cardService.UpdateSettings(card.UserId, card.Id, new UpdateCardSettingsRequest
+            {
+                SpendingLimit = -5m
+            });
+
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.False);
+                Assert.That(cardCommandResponse.Message, Does.Contain("non-negative"));
+            }
+        }
+
+        [Test]
+        public void UpdateSettings_SpendingLimitExceedsConfiguredMaximum_ReturnsFailure()
+        {
+            Card card = CreateCard();
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+
+            CardService testCardServiceForExceedingLimit = new CardService(mockCardRepository, mockUserRepository,
+                mockHashService, mockOtpService, mockEmailService, Options.Create(new TeamCOptions
+                {
+                    MaximumSpendingLimit = 1000m
+                }));
+
+            CardCommandResponse cardCommandResponse = testCardServiceForExceedingLimit.UpdateSettings(card.UserId, card.Id, new UpdateCardSettingsRequest
+            {
+                SpendingLimit = 1500m
+            });
+
+            Assert.That(cardCommandResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardCommandResponse.Success, Is.False);
+                Assert.That(cardCommandResponse.Message, Does.Contain("cannot exceed 1000"));
+            }
+
+            mockCardRepository.Received(0)
+                .UpdateSettings(Arg.Any<int>(), Arg.Any<decimal?>(), Arg.Any<bool>(), Arg.Any<bool>());
+        }
+
+        [Test]
+        public void UpdateSettings_SpendingLimitExceedsConfiguredMaximum_NeverUpdatesCard()
+        {
+            Card card = CreateCard();
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+
+            CardService testCardServiceForExceedingLimit = new CardService(mockCardRepository, mockUserRepository,
+                mockHashService, mockOtpService, mockEmailService, Options.Create(new TeamCOptions
+                {
+                    MaximumSpendingLimit = 1000m
+                }));
+
+            CardCommandResponse cardCommandResponse = testCardServiceForExceedingLimit.UpdateSettings(card.UserId, card.Id, new UpdateCardSettingsRequest
+            {
+                SpendingLimit = 1500m
+            });
+
+            mockCardRepository.Received(0)
+                .UpdateSettings(Arg.Any<int>(), Arg.Any<decimal?>(), Arg.Any<bool>(), Arg.Any<bool>());
+        }
+        public static CardService CreateService(
+            Mock<ICardRepository> cardRepositoryMock,
+            Mock<IUserRepository> userRepositoryMock,
+            Mock<IHashService> hashServiceMock,
+            Mock<IOTPService> otpServiceMock,
+            Mock<IEmailService> emailServiceMock)
+        {
+            return new CardService(
+                cardRepositoryMock.Object,
+                userRepositoryMock.Object,
+                hashServiceMock.Object,
+                otpServiceMock.Object,
+                emailServiceMock.Object,
+                Options.Create(new TeamCOptions()));
+        }
+
+        public static Card CreateCard()
+        {
+            return new Card
+            {
+                Id = 7,
+                UserId = 3,
+                AccountId = 11,
+                CardNumber = "5555444433331111",
+                CardholderName = "Ada Lovelace",
+                ExpiryDate = new DateTime(2030, 12, 1),
+                CVV = "123",
+                CardType = "Debit",
+                CardBrand = "Mastercard",
                 Status = "Active",
-                MonthlySpendingCap = frozenCard.MonthlySpendingCap,
-                IsOnlineEnabled = frozenCard.IsOnlineEnabled,
-                IsContactlessEnabled = frozenCard.IsContactlessEnabled
-            });
-        cardRepositoryMock.Setup(repository => repository.UpdateStatus(frozenCard.Id, "Active")).Returns(true);
+                MonthlySpendingCap = 2500m,
+                IsOnlineEnabled = true,
+                IsContactlessEnabled = true
+            };
+        }
 
-        CardService service = CreateService(
-            cardRepositoryMock,
-            userRepositoryMock,
-            hashServiceMock,
-            otpServiceMock,
-            emailServiceMock);
-
-        CardCommandResponse response = service.UnfreezeCard(frozenCard.UserId, frozenCard.Id);
-
-        Assert.True(response.Success);
-        Assert.Equal("Active", response.Card!.Status);
-    }
-
-    [Fact]
-    public void UpdateSettings_SpendingLimitIsNegative_ReturnsFailure()
-    {
-        Mock<ICardRepository> cardRepositoryMock = new ();
-        Mock<IUserRepository> userRepositoryMock = new ();
-        Mock<IHashService> hashServiceMock = new ();
-        Mock<IOTPService> otpServiceMock = new ();
-        Mock<IEmailService> emailServiceMock = new ();
-
-        Card card = CreateCard();
-        cardRepositoryMock.Setup(repository => repository.GetCardById(card.Id)).Returns(card);
-
-        CardService service = CreateService(
-            cardRepositoryMock,
-            userRepositoryMock,
-            hashServiceMock,
-            otpServiceMock,
-            emailServiceMock);
-
-        CardCommandResponse response = service.UpdateSettings(card.UserId, card.Id, new UpdateCardSettingsRequest
+        public static User CreateUser(bool isTwoFactorEnabled)
         {
-            SpendingLimit = -5m
-        });
-
-        Assert.False(response.Success);
-        Assert.Contains("non-negative", response.Message);
-    }
-
-    [Fact]
-    public void UpdateSettings_SpendingLimitExceedsConfiguredMaximum_ReturnsFailure()
-    {
-        Mock<ICardRepository> cardRepositoryMock = new ();
-        Mock<IUserRepository> userRepositoryMock = new ();
-        Mock<IHashService> hashServiceMock = new ();
-        Mock<IOTPService> otpServiceMock = new ();
-        Mock<IEmailService> emailServiceMock = new ();
-
-        Card card = CreateCard();
-        cardRepositoryMock.Setup(repository => repository.GetCardById(card.Id)).Returns(card);
-
-        CardService service = new (
-            cardRepositoryMock.Object,
-            userRepositoryMock.Object,
-            hashServiceMock.Object,
-            otpServiceMock.Object,
-            emailServiceMock.Object,
-            Options.Create(new TeamCOptions
+            return new User
             {
-                MaximumSpendingLimit = 1000m
-            }));
-
-        CardCommandResponse response = service.UpdateSettings(card.UserId, card.Id, new UpdateCardSettingsRequest
-        {
-            SpendingLimit = 1500m
-        });
-
-        Assert.False(response.Success);
-        Assert.Contains("cannot exceed 1000", response.Message);
-        cardRepositoryMock.Verify(
-            repository => repository.UpdateSettings(It.IsAny<int>(), It.IsAny<decimal?>(), It.IsAny<bool>(), It.IsAny<bool>()),
-            Times.Never);
-    }
-
-    public static CardService CreateService(
-        Mock<ICardRepository> cardRepositoryMock,
-        Mock<IUserRepository> userRepositoryMock,
-        Mock<IHashService> hashServiceMock,
-        Mock<IOTPService> otpServiceMock,
-        Mock<IEmailService> emailServiceMock)
-    {
-        return new CardService(
-            cardRepositoryMock.Object,
-            userRepositoryMock.Object,
-            hashServiceMock.Object,
-            otpServiceMock.Object,
-            emailServiceMock.Object,
-            Options.Create(new TeamCOptions()));
-    }
-
-    public static Card CreateCard()
-    {
-        return new Card
-        {
-            Id = 7,
-            UserId = 3,
-            AccountId = 11,
-            CardNumber = "5555444433331111",
-            CardholderName = "Ada Lovelace",
-            ExpiryDate = new DateTime(2030, 12, 1),
-            CVV = "123",
-            CardType = "Debit",
-            CardBrand = "Mastercard",
-            Status = "Active",
-            MonthlySpendingCap = 2500m,
-            IsOnlineEnabled = true,
-            IsContactlessEnabled = true
-        };
-    }
-
-    public static User CreateUser(bool isTwoFactorEnabled)
-    {
-        return new User
-        {
-            Id = 3,
-            Email = "ada@example.com",
-            PasswordHash = "hashed",
-            FullName = "Ada Lovelace",
-            Is2FAEnabled = isTwoFactorEnabled,
-            Preferred2FAMethod = "Email"
-        };
+                Id = 3,
+                Email = "ada@example.com",
+                PasswordHash = "hashed",
+                FullName = "Ada Lovelace",
+                Is2FAEnabled = isTwoFactorEnabled,
+                Preferred2FAMethod = "Email"
+            };
+        }
     }
 }
