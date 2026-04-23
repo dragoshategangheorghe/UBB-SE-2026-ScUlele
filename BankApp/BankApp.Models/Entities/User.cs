@@ -18,5 +18,15 @@
         public int FailedLoginAttempts { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj == null || obj is not User)
+            {
+                return false;
+            }
+            User otherUser = (User)obj;
+            return Id == otherUser.Id;
+        }
     }
 }

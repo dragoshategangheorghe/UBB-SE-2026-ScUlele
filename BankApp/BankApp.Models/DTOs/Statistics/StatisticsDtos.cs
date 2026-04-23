@@ -1,3 +1,5 @@
+using BankApp.Models.Entities;
+
 namespace BankApp.Models.DTOs.Statistics
 {
     public class SpendingByCategoryResponse
@@ -36,12 +38,35 @@ namespace BankApp.Models.DTOs.Statistics
         public string CategoryName { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public decimal ShareOfTotal { get; set; }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj == null || obj is not CategorySpendingPointDto)
+            {
+                return false;
+            }
+            var other = (CategorySpendingPointDto)obj;
+            return CategoryName == other.CategoryName
+                && Amount == other.Amount
+                && ShareOfTotal == other.ShareOfTotal;
+        }
     }
 
     public class BalanceTrendPointDto
     {
         public DateTime Date { get; set; }
         public decimal Balance { get; set; }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj == null || obj is not BalanceTrendPointDto)
+            {
+                return false;
+            }
+            var other = (BalanceTrendPointDto)obj;
+            return Date.Date == other.Date.Date
+                && Balance == other.Balance;
+        }
     }
 
     public class TopCounterpartyDto
