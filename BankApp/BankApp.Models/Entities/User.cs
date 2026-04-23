@@ -21,12 +21,29 @@
 
         public override bool Equals(object? obj)
         {
-            if (obj == null || obj is not User)
+            if (obj == null || GetType() != obj.GetType())
             {
                 return false;
             }
-            User otherUser = (User)obj;
-            return Id == otherUser.Id;
+
+            User other = (User)obj;
+
+            return Id == other.Id &&
+                   Email == other.Email &&
+                   PasswordHash == other.PasswordHash &&
+                   FullName == other.FullName &&
+                   PhoneNumber == other.PhoneNumber &&
+                   DateOfBirth == other.DateOfBirth &&
+                   Address == other.Address &&
+                   Nationality == other.Nationality &&
+                   PreferredLanguage == other.PreferredLanguage &&
+                   Is2FAEnabled == other.Is2FAEnabled &&
+                   Preferred2FAMethod == other.Preferred2FAMethod &&
+                   IsLocked == other.IsLocked &&
+                   LockoutEnd == other.LockoutEnd &&
+                   FailedLoginAttempts == other.FailedLoginAttempts &&
+                   CreatedAt == other.CreatedAt &&
+                   UpdatedAt == other.UpdatedAt;
         }
     }
 }

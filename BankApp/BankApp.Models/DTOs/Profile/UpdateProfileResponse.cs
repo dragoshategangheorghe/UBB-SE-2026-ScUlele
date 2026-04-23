@@ -19,5 +19,14 @@ namespace BankApp.Models.DTOs.Profile
             Success = success;
             Message = message;
         }
+
+        public override bool Equals(object? obj)
+        {
+            UpdateProfileResponse? other = obj as UpdateProfileResponse;
+
+            return other != null &&
+                   Success == other.Success &&
+                   Message == other.Message;
+        }
     }
 }
