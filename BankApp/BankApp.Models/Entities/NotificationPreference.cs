@@ -12,5 +12,18 @@ namespace BankApp.Models.Entities
         public bool EmailEnabled { get; set; } = true;
         public bool SmsEnabled { get; set; }
         public decimal? MinAmountThreshold { get; set; }
+
+        public override bool Equals(object? obj)
+        {
+            NotificationPreference other = obj as NotificationPreference;
+            return other != null &&
+                   Id == other.Id &&
+                   UserId == other.UserId &&
+                   Category == other.Category &&
+                   PushEnabled == other.PushEnabled &&
+                   EmailEnabled == other.EmailEnabled &&
+                   SmsEnabled == other.SmsEnabled &&
+                   MinAmountThreshold == other.MinAmountThreshold;
+        }
     }
 }

@@ -20,5 +20,14 @@ namespace BankApp.Models.DTOs.Profile
             Success = success;
             Message = message;
         }
+
+        public override bool Equals(object? obj)
+        {
+            ChangePasswordResponse? other = obj as ChangePasswordResponse;
+
+            return other != null &&
+                   Success == other.Success &&
+                   Message == other.Message;
+        }
     }
 }

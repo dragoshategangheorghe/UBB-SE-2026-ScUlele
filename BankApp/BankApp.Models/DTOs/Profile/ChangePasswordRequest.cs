@@ -15,5 +15,15 @@
             CurrentPassword = currentPassword;
             NewPassword = newPassword;
         }
+
+        public override bool Equals(object? obj)
+        {
+            ChangePasswordRequest? other = obj as ChangePasswordRequest;
+
+            return other != null &&
+                   UserId == other.UserId &&
+                   CurrentPassword == other.CurrentPassword &&
+                   NewPassword == other.NewPassword;
+        }
     }
 }
