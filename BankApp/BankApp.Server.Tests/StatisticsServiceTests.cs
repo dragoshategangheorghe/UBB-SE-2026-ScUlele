@@ -1,9 +1,10 @@
-﻿using BankApp.Models.DTOs.Transactions;
-using BankApp.Models.DTOs.Statistics;
+﻿using BankApp.Models.DTOs.Statistics;
+using BankApp.Models.DTOs.Transactions;
 using BankApp.Server.Configuration;
 using BankApp.Server.Repositories.Interfaces;
 using BankApp.Server.Services.Implementations;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -16,6 +17,68 @@ namespace BankApp.Server.Tests
         private IOptions<TeamCOptions> options;
         private StatisticsService statisticsService;
 
+        private static int GetTestId()
+        {
+            return 1;
+        }
+
+        private static List<TransactionHistoryItemDto> CreateTransactionsForGetSpendingByCategory()
+        {
+            return new List<TransactionHistoryItemDto>
+            {
+                new () { Amount = 134, Direction = "Debit", Status = "Completed", CategoryName = "Food" },
+                new () { Amount = 70, Direction = "Credit", Status = "Completed", CategoryName = "Food" },
+                new () { Amount = 66, Direction = "Debit", Status = "Completed", CategoryName = "Transport" },
+                new () { Amount = 90, Direction = "Credit", Status = "Completed", CategoryName = "Purchase" },
+            };
+        }
+
+        private static List<TransactionHistoryItemDto> CreateTransactionsWithEmptyCategoryAndZeroAmount()
+        {
+            return new List<TransactionHistoryItemDto>
+            {
+                new () { Amount = 0, Direction = "Debit", Status = "Completed", CategoryName = " " },
+                new () { Amount = 0, Direction = "Debit", Status = "Completed", CategoryName = "    " },
+            };
+        }
+
+        private static List<TransactionHistoryItemDto> CreateCreditAndDebitTransactions()
+        {
+            return new List<TransactionHistoryItemDto>
+            {
+                new () { Amount = 94, Direction = "Credit", Status = "Completed" },
+                new () { Amount = 53, Direction = "Debit", Status = "Completed" },
+                new () { Amount = 138, Direction = "Debit", Status = "Failed" },
+                new () { Amount = 13, Direction = "Credit", Status = "Completed" },
+                new () { Amount = 32, Direction = "Debit", Status = "Completed" },
+            };
+        }
+
+        private static List<TransactionHistoryItemDto> CreateTransactionsForGetTopRecipients()
+        {
+            return new List<TransactionHistoryItemDto>
+            {
+                new () { Amount = 100, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "A" },
+                new () { Amount = 110, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "B" },
+                new () { Amount = 50, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "C" },
+                new () { Amount = 32, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "D" },
+                new () { Amount = 32, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "D" },
+                new () { Amount = 102, Direction = "Debit", Status = "Failed", CounterpartyOrMerchant = "E" },
+                new () { Amount = 93, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "E" },
+                new () { Amount = 120, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "F" },
+            };
+        }
+
+        private static List<TransactionHistoryItemDto> CreateTransactionsForOnlyOneRecipient()
+        {
+            return new List<TransactionHistoryItemDto>
+            {
+                new () { Amount = 102, Direction = "Debit", Status = "Failed", CounterpartyOrMerchant = "E" },
+                new () { Amount = 53, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "E" },
+                new () { Amount = 93, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "E" },
+            };
+        }
+
         [SetUp]
         public void SetUp()
         {
@@ -26,172 +89,165 @@ namespace BankApp.Server.Tests
         }
 
         [Test]
-        public void GetSpendingByCategory_CalculatesCorrectly()
+        public void GetSpendingByCategory_SuccessfulDebitTransactionsPresent_SuccessResponse()
         {
-            int userId = 1;
-            mockTransactionHistoryRepository.GetTransactionsByUserId(userId).Returns(new List<TransactionHistoryItemDto>
-            {
-                new TransactionHistoryItemDto { Amount = 100, Direction = "Debit", Status = "Completed", CategoryName = "Food" },
-                new TransactionHistoryItemDto { Amount = 50, Direction = "Credit", Status = "Completed", CategoryName = "Food" },
-                new TransactionHistoryItemDto { Amount = 30, Direction = "Debit", Status = "Completed", CategoryName = "Transport" },
-                new TransactionHistoryItemDto { Amount = 90, Direction = "Credit", Status = "Completed", CategoryName = "Ignored" }
-            });
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(CreateTransactionsForGetSpendingByCategory());
 
-            var result = statisticsService.GetSpendingByCategory(userId);
+            var result = statisticsService.GetSpendingByCategory(GetTestId());
 
             Assert.That(result.Success, Is.True);
-            Assert.That(result.TotalSpending, Is.EqualTo(130));
-            Assert.That(result.Categories.Count, Is.EqualTo(2));
-
-            Assert.That(result.Categories[0].CategoryName, Is.EqualTo("Food"));
-            Assert.That(result.Categories[0].Amount, Is.EqualTo(100));
-
-            Assert.That(result.Categories[1].CategoryName, Is.EqualTo("Transport"));
-            Assert.That(result.Categories[1].Amount, Is.EqualTo(30));
         }
 
         [Test]
-        public void GetSpendingByCategory_HandlesEmptyCategory_AsUncategorized()
+        public void GetSpendingByCategory_SuccessfulDebitTransactionsPresent_CorrectTotalSpendingCalculation()
         {
-            int userId = 1;
-            mockTransactionHistoryRepository.GetTransactionsByUserId(userId).Returns(new List<TransactionHistoryItemDto>
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(CreateTransactionsForGetSpendingByCategory());
+
+            var result = statisticsService.GetSpendingByCategory(GetTestId());
+
+            Assert.That(result.TotalSpending, Is.EqualTo(200));
+        }
+
+        [Test]
+        public void GetSpendingByCategory_SuccessfulDebitTransactionsPresent_CorrectCategorySpendingPoints()
+        {
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(CreateTransactionsForGetSpendingByCategory());
+            List<CategorySpendingPointDto> expectedCategorySpendingPoints = new List<CategorySpendingPointDto>
             {
-                new TransactionHistoryItemDto { Amount = 10, Direction = "Debit", Status = "Completed", CategoryName = " " },
-                new TransactionHistoryItemDto { Amount = 50, Direction = "Debit", Status = "Completed", CategoryName = "   " }
-            });
+                new () { CategoryName = "Food", Amount = 134, ShareOfTotal = 0.67m },
+                new () { CategoryName = "Transport", Amount = 66, ShareOfTotal = 0.33m },
+            };
 
-            SpendingByCategoryResponse result = statisticsService.GetSpendingByCategory(userId);
+            var result = statisticsService.GetSpendingByCategory(GetTestId());
 
-            Assert.That(result.Categories.Count, Is.EqualTo(1));
+            Assert.That(result.Categories, Is.EqualTo(expectedCategorySpendingPoints));
+        }
+
+        [Test]
+        public void GetSpendingByCategory_TransactionsWithNoCategoryPresent_TransactionCategorizedAsUncategorized()
+        {
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(CreateTransactionsWithEmptyCategoryAndZeroAmount());
+
+            SpendingByCategoryResponse result = statisticsService.GetSpendingByCategory(GetTestId());
+
             Assert.That(result.Categories[0].CategoryName, Is.EqualTo("Uncategorized"));
-            Assert.That(result.Categories[0].Amount, Is.EqualTo(60));
         }
 
         [Test]
-        public void GetSpendingByCategory_ShareOfTotalOfCategories_IsCalculatedCorrectly()
+        public void GetSpendingByCategory_AllTransactionsWithZeroAmount_AllSharesOfTotalSpendingByCategoryEqualToZero()
         {
-            int userId = 1;
-            mockTransactionHistoryRepository.GetTransactionsByUserId(userId).Returns(new List<TransactionHistoryItemDto>
-            {
-                new TransactionHistoryItemDto { Amount = 67, Direction = "Debit", Status = "Completed", CategoryName = "Food" },
-                new TransactionHistoryItemDto { Amount = 33, Direction = "Debit", Status = "Completed", CategoryName = "Transport" }
-            });
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(CreateTransactionsWithEmptyCategoryAndZeroAmount());
 
-            SpendingByCategoryResponse result = statisticsService.GetSpendingByCategory(userId);
+            SpendingByCategoryResponse result = statisticsService.GetSpendingByCategory(GetTestId());
 
-            Assert.That(result.TotalSpending, Is.EqualTo(100));
-            Assert.That(result.Categories[0].ShareOfTotal, Is.EqualTo(0.67m));
-            Assert.That(result.Categories[1].ShareOfTotal, Is.EqualTo(0.33m));
-        }
-
-        [Test]
-        public void GetSpendingByCategory_ShareOfTotalOfCategories_SetToZero_IfTotalSpendingIsZero()
-        {
-            int userId = 1;
-            mockTransactionHistoryRepository.GetTransactionsByUserId(userId).Returns(new List<TransactionHistoryItemDto>
-            {
-                new TransactionHistoryItemDto { Amount = 0, Direction = "Debit", Status = "Completed", CategoryName = "Food" },
-                new TransactionHistoryItemDto { Amount = 0, Direction = "Debit", Status = "Completed", CategoryName = "Transport" }
-            });
-
-            SpendingByCategoryResponse result = statisticsService.GetSpendingByCategory(userId);
-
-            Assert.That(result.TotalSpending, Is.EqualTo(0));
             Assert.That(result.Categories[0].ShareOfTotal, Is.Zero);
-            Assert.That(result.Categories[1].ShareOfTotal, Is.Zero);
         }
 
         [Test]
-        public void GetIncomeVsExpenses_ComputesIncomeExpensesAndNet()
+        public void GetIncomeVsExpenses_SuccessfulTransactionsPresent_ComputesIncome()
         {
-            int userId = 1;
-            mockTransactionHistoryRepository.GetTransactionsByUserId(userId).Returns(new List<TransactionHistoryItemDto>
-            {
-                new TransactionHistoryItemDto { Amount = 94, Direction = "Credit", Status = "Completed" },
-                new TransactionHistoryItemDto { Amount = 53, Direction = "Debit", Status = "Completed" },
-                new TransactionHistoryItemDto { Amount = 138, Direction = "Debit", Status = "Failed" }
-            });
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(CreateCreditAndDebitTransactions());
 
-            IncomeVsExpensesResponse result = statisticsService.GetIncomeVsExpenses(userId);
+            IncomeVsExpensesResponse result = statisticsService.GetIncomeVsExpenses(GetTestId());
 
-            Assert.That(result.Income, Is.EqualTo(94));
-            Assert.That(result.Expenses, Is.EqualTo(53));
-            Assert.That(result.Net, Is.EqualTo(41));
+            Assert.That(result.Income, Is.EqualTo(107));
         }
 
         [Test]
-        public void GetBalanceTrends_SelectsLatestPerDay()
+        public void GetIncomeVsExpenses_SuccessfulTransactionsPresent_ComputesExpenses()
         {
-            int userId = 1;
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(CreateCreditAndDebitTransactions());
+
+            IncomeVsExpensesResponse result = statisticsService.GetIncomeVsExpenses(GetTestId());
+
+            Assert.That(result.Expenses, Is.EqualTo(85));
+        }
+
+        [Test]
+        public void GetIncomeVsExpenses_SuccessfulTransactionsPresent_ComputesNet()
+        {
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(CreateCreditAndDebitTransactions());
+
+            IncomeVsExpensesResponse result = statisticsService.GetIncomeVsExpenses(GetTestId());
+
+            Assert.That(result.Net, Is.EqualTo(22));
+        }
+
+        [Test]
+        public void GetBalanceTrends_SuccessfulTransactionsPresentAcrossMultipleDays_SelectsLatestBalanceEveryDay()
+        {
             var cutoff = new DateTime(2026, 3, 24);
-            mockTransactionHistoryRepository.GetTransactionsByUserId(userId).Returns(new List<TransactionHistoryItemDto>
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(new List<TransactionHistoryItemDto>
             {
                 new TransactionHistoryItemDto { Id = 1, Timestamp = cutoff.AddHours(3), RunningBalanceAfterTransaction = 100, Status = "Completed" },
                 new TransactionHistoryItemDto { Id = 2, Timestamp = cutoff.AddHours(2), RunningBalanceAfterTransaction = 200, Status = "Completed" },
                 new TransactionHistoryItemDto { Id = 3, Timestamp = cutoff.AddDays(1), RunningBalanceAfterTransaction = 300, Status = "Completed" }
             });
 
-            BalanceTrendsResponse result = statisticsService.GetBalanceTrends(userId);
-
-            Assert.That(result.Points.Count, Is.EqualTo(2));
-            Assert.That(result.Points[0].Balance, Is.EqualTo(100));
-            Assert.That(result.Points[1].Balance, Is.EqualTo(300));
+            BalanceTrendsResponse result = statisticsService.GetBalanceTrends(GetTestId());
+            var expectedResult = new BalanceTrendsResponse
+            {
+                Success = true,
+                Message = "Balance trends loaded successfully.",
+                Points = new List<BalanceTrendPointDto>
+                {
+                    new () { Date = new DateTime(2026, 3, 24, 0, 0, 0, DateTimeKind.Utc), Balance = 100 },
+                    new () { Date = new DateTime(2026, 3, 25, 0, 0, 0, DateTimeKind.Utc), Balance = 300 },
+                }
+            };
+            Assert.That(result.Points.SequenceEqual(expectedResult.Points), Is.EqualTo(true));
         }
 
         [Test]
-        public void GetTopRecipients_RespectsTopCountAndOrdering()
+        public void GetTopRecipients_SuccessfulDebitTransactionsPresent_ReturnsTopFiveRecipientsOrderedByTotalAmountReceivedDescending()
         {
-            int userId = 1;
-            mockTransactionHistoryRepository.GetTransactionsByUserId(userId).Returns(new List<TransactionHistoryItemDto>
-            {
-                new TransactionHistoryItemDto { Amount = 100, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "A" },
-                new TransactionHistoryItemDto { Amount = 110, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "B" },
-                new TransactionHistoryItemDto { Amount = 50, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "C" },
-                new TransactionHistoryItemDto { Amount = 32, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "D" },
-                new TransactionHistoryItemDto { Amount = 32, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "D" },
-                new TransactionHistoryItemDto { Amount = 102, Direction = "Debit", Status = "Failed", CounterpartyOrMerchant = "E" },
-                new TransactionHistoryItemDto { Amount = 93, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "E" },
-                new TransactionHistoryItemDto { Amount = 120, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "F" }
-            });
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(CreateTransactionsForGetTopRecipients());
 
-            TopRecipientsResponse result = statisticsService.GetTopRecipients(userId);
+            TopRecipientsResponse result = statisticsService.GetTopRecipients(GetTestId());
 
             Assert.That(result.Recipients.Count, Is.EqualTo(5));
-            Assert.That(result.Recipients[0].Name, Is.EqualTo("F"));
-            Assert.That(result.Recipients[1].Name, Is.EqualTo("B"));
-            Assert.That(result.Recipients[2].Name, Is.EqualTo("A"));
-            Assert.That(result.Recipients[3].Name, Is.EqualTo("E"));
-            Assert.That(result.Recipients[4].Name, Is.EqualTo("D"));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(result.Recipients[0].Name, Is.EqualTo("F"));
+                Assert.That(result.Recipients[1].Name, Is.EqualTo("B"));
+                Assert.That(result.Recipients[2].Name, Is.EqualTo("A"));
+                Assert.That(result.Recipients[3].Name, Is.EqualTo("E"));
+                Assert.That(result.Recipients[4].Name, Is.EqualTo("D"));
+            }
         }
 
         [Test]
-        public void GetTopRecipients_IgnoresEmptyNames()
+        public void GetTopRecipients_SuccessfulDebitTransactionsPresentWithOnlyOneRecipient_ReturnsNumberOfTransactions()
         {
-            int userId = 1;
-            mockTransactionHistoryRepository.GetTransactionsByUserId(userId).Returns(new List<TransactionHistoryItemDto>
-            {
-                new TransactionHistoryItemDto { Amount = 123, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = " " }
-            });
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(CreateTransactionsForOnlyOneRecipient());
 
-            TopRecipientsResponse result = statisticsService.GetTopRecipients(userId);
-
-            Assert.That(result.Recipients, Is.Empty);
-        }
-
-        [Test]
-        public void GetTopRecipients_CountsTransactionsCorrectly()
-        {
-            int userId = 1;
-            mockTransactionHistoryRepository.GetTransactionsByUserId(userId).Returns(new List<TransactionHistoryItemDto>
-            {
-                new TransactionHistoryItemDto { Amount = 74, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "A" },
-                new TransactionHistoryItemDto { Amount = 50, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = "A" }
-            });
-
-            TopRecipientsResponse result = statisticsService.GetTopRecipients(userId);
+            TopRecipientsResponse result = statisticsService.GetTopRecipients(GetTestId());
 
             Assert.That(result.Recipients[0].TransactionCount, Is.EqualTo(2));
-            Assert.That(result.Recipients[0].TotalAmount, Is.EqualTo(124));
+        }
+
+        [Test]
+        public void GetTopRecipients_SuccessfulDebitTransactionsPresentWithOnlyOneRecipient_ReturnsTotalAmount()
+        {
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(CreateTransactionsForOnlyOneRecipient());
+
+            TopRecipientsResponse result = statisticsService.GetTopRecipients(GetTestId());
+
+            Assert.That(result.Recipients[0].TotalAmount, Is.EqualTo(146));
+        }
+
+        [Test]
+        public void GetTopRecipients_OnlyTransactionsPresentWithMissingRecipients_ReturnsEmptyListOfTopRecipients()
+        {
+            mockTransactionHistoryRepository.GetTransactionsByUserId(GetTestId()).Returns(new List<TransactionHistoryItemDto>
+            {
+                new () { Amount = 123, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = " " },
+                new () { Amount = 345, Direction = "Debit", Status = "Completed", CounterpartyOrMerchant = " " },
+            });
+
+            TopRecipientsResponse result = statisticsService.GetTopRecipients(GetTestId());
+
+            Assert.That(result.Recipients, Is.Empty);
         }
     }
 }

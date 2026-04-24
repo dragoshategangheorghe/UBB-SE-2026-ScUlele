@@ -42,20 +42,25 @@ namespace BankApp.Server.Tests
         [Test]
         public void GetDashboardData_UserWithID_ReturnsFullDashboardResponse()
         {
-            int userId = 1;
-            User testUser = new User { Id = userId };
-            mockUserRepository.FindById(userId).Returns(testUser);
-            mockDashboardRepository.GetCardsByUser(userId).Returns(new List<Card>());
-            mockDashboardRepository.GetRecentTransactions(userId).Returns(new List<Transaction>());
-            mockDashboardRepository.GetUnreadNotificationCount(userId).Returns(3);
+            int testUserId = 1;
+            int testNotificationCount = 3;
+            User testUser = new User { Id = testUserId };
 
-            DashboardResponse response = dashboardService.GetDashboardData(userId);
+            mockUserRepository.FindById(testUserId).Returns(testUser);
+            mockDashboardRepository.GetCardsByUser(testUserId).Returns(new List<Card>());
+            mockDashboardRepository.GetRecentTransactions(testUserId).Returns(new List<Transaction>());
+            mockDashboardRepository.GetUnreadNotificationCount(testUserId).Returns(testNotificationCount);
 
-            Assert.That(response, Is.Not.Null);
-            Assert.That(response.CurrentUser, Is.EqualTo(testUser));
-            Assert.That(response.Cards, Is.EqualTo(new List<Card>()));
-            Assert.That(response.RecentTransactions, Is.EqualTo(new List<Transaction>()));
-            Assert.That(response.UnreadNotificationCount, Is.EqualTo(3));
+            DashboardResponse testResponse = dashboardService.GetDashboardData(testUserId);
+            DashboardResponse responseToCompareTo = new DashboardResponse
+            {
+                CurrentUser = testUser,
+                Cards = new (),
+                RecentTransactions = new (),
+                UnreadNotificationCount = testNotificationCount
+            };
+
+            Assert.That(testResponse, Is.EqualTo(responseToCompareTo));
         }
     }
 }
