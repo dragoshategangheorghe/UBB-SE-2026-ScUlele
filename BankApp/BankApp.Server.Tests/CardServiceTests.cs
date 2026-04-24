@@ -390,6 +390,7 @@ namespace BankApp.Server.Tests
             }
         }
 
+        [Test]
         public void RevealSensitiveDetails_TwoFactorEnabledAndOtpMissing_SendRequiredOtpToUser()
         {
             Card card = CreateCard();
@@ -621,20 +622,59 @@ namespace BankApp.Server.Tests
             mockCardRepository.Received(0)
                 .UpdateSettings(Arg.Any<int>(), Arg.Any<decimal?>(), Arg.Any<bool>(), Arg.Any<bool>());
         }
-        public static CardService CreateService(
-            Mock<ICardRepository> cardRepositoryMock,
-            Mock<IUserRepository> userRepositoryMock,
-            Mock<IHashService> hashServiceMock,
-            Mock<IOTPService> otpServiceMock,
-            Mock<IEmailService> emailServiceMock)
+
+        [Test]
+        public void GetCard_CardDoesNotExist_ReturnsFailure()
         {
-            return new CardService(
-                cardRepositoryMock.Object,
-                userRepositoryMock.Object,
-                hashServiceMock.Object,
-                otpServiceMock.Object,
-                emailServiceMock.Object,
-                Options.Create(new TeamCOptions()));
+            Card card = CreateCard();
+            User user = CreateUser(false);
+            mockCardRepository.GetCardById(card.Id).Returns((Card)null!);
+
+            CardDetailsResponse cardDetailsResponse = cardService.GetCard(user.Id, card.Id);
+
+            Assert.That(cardDetailsResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardDetailsResponse.Success, Is.False);
+                Assert.That(cardDetailsResponse.Message, Is.EqualTo("Card not found."));
+            }
+        }
+        [Test]
+        public void GetCard_CardExists_ReturnsCardDetails()
+        {
+            Card card = CreateCard();
+            User user = CreateUser(false);
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+
+            CardDetailsResponse cardDetailsResponse = cardService.GetCard(user.Id, card.Id);
+
+            Assert.That(cardDetailsResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cardDetailsResponse.Success, Is.True);
+                Assert.That(cardDetailsResponse.Message, Is.EqualTo("Card loaded successfully."));
+            }
+        }
+        [Test]
+        public void RevealSensitiveDetails_PasswordIsEmpty_ReturnsFailure()
+        {
+            Card card = CreateCard();
+            User user = CreateUser(isTwoFactorEnabled: false);
+
+            mockCardRepository.GetCardById(card.Id).Returns(card);
+            mockUserRepository.FindById(user.Id).Returns(user);
+
+            RevealCardResponse revealCardResponse = cardService.RevealSensitiveDetails(user.Id, card.Id, new RevealCardRequest
+            {
+                Password = "   "
+            });
+
+            Assert.That(revealCardResponse, Is.Not.Null);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(revealCardResponse.Success, Is.False);
+                Assert.That(revealCardResponse.Message, Is.EqualTo("Password verification failed."));
+            }
         }
 
         public static Card CreateCard()
