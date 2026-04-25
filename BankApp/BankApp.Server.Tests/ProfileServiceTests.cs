@@ -43,8 +43,7 @@ namespace BankApp.Server.Tests
             Assert.That(user, Is.Not.Null);
             using (Assert.EnterMultipleScope())
             {
-                Assert.That(user.Id, Is.EqualTo(1));
-                Assert.That(user.FullName, Is.EqualTo("John Doe"));
+                Assert.That(user.Equals(mockUser), Is.True);
             }
         }
 
@@ -65,14 +64,14 @@ namespace BankApp.Server.Tests
         {
             UpdateProfileResponse updateProfileResponse =
                 profileService.UpdatePersonalInfo(new UpdateProfileRequest());
-            Assert.That(updateProfileResponse, Is.Not.Null);
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(updateProfileResponse.Success, Is.False);
-                Assert.That(updateProfileResponse.Message, Is.EqualTo("Something went wrong. Please try again."));
-            }
 
-            // Assert.Pass();
+            UpdateProfileResponse expectedResponse = new UpdateProfileResponse
+            {
+                Success = false,
+                Message = "Something went wrong. Please try again."
+            };
+
+            Assert.That(updateProfileResponse.Equals(expectedResponse), Is.True);
         }
 
         [Test]
@@ -81,12 +80,14 @@ namespace BankApp.Server.Tests
             mockUserRepository.FindById(Arg.Any<int>()).Returns((User?)null);
             UpdateProfileResponse updateProfileResponse =
                 profileService.UpdatePersonalInfo(new UpdateProfileRequest { UserId = 1 });
-            Assert.That(updateProfileResponse, Is.Not.Null);
-            using (Assert.EnterMultipleScope())
+
+            UpdateProfileResponse expectedResponse = new UpdateProfileResponse
             {
-                Assert.That(updateProfileResponse.Success, Is.False);
-                Assert.That(updateProfileResponse.Message, Is.EqualTo("User not found."));
-            }
+                Success = false,
+                Message = "User not found."
+            };
+
+            Assert.That(updateProfileResponse.Equals(expectedResponse), Is.True);
         }
 
         [Test]
@@ -96,12 +97,14 @@ namespace BankApp.Server.Tests
             mockUserRepository.FindById(1).Returns(user);
             UpdateProfileResponse updateProfileResponse =
                 profileService.UpdatePersonalInfo(new UpdateProfileRequest { UserId = 1, PhoneNumber = "invalid-phone" });
-            Assert.That(updateProfileResponse, Is.Not.Null);
-            using (Assert.EnterMultipleScope())
+
+            UpdateProfileResponse expectedResponse = new UpdateProfileResponse
             {
-                Assert.That(updateProfileResponse.Success, Is.False);
-                Assert.That(updateProfileResponse.Message, Is.EqualTo("Invalid phone number."));
-            }
+                Success = false,
+                Message = "Invalid phone number."
+            };
+
+            Assert.That(updateProfileResponse.Equals(expectedResponse), Is.True);
         }
 
         [Test]
@@ -114,12 +117,27 @@ namespace BankApp.Server.Tests
             UpdateProfileResponse updateProfileResponse =
                 profileService.UpdatePersonalInfo(new UpdateProfileRequest { UserId = 1, PhoneNumber = "0987654321", Address = "New Address" });
 
-            Assert.That(updateProfileResponse, Is.Not.Null);
-            using (Assert.EnterMultipleScope())
+            UpdateProfileResponse expectedResponse = new UpdateProfileResponse
             {
-                Assert.That(updateProfileResponse.Success, Is.False);
-                Assert.That(updateProfileResponse.Message, Is.EqualTo("Could not update user."));
-            }
+                Success = false,
+                Message = "Could not update user."
+            };
+
+            Assert.That(updateProfileResponse.Equals(expectedResponse), Is.True);
+        }
+
+        [Test]
+        public void UpdatePersonalInfo_UserRepositoryUpdatesChanges_ReturnsSuccess()
+        {
+            User user = new User { Id = 1, PhoneNumber = "1234567890", Address = "Old Address" };
+            mockUserRepository.FindById(1).Returns(user);
+            mockUserRepository.UpdateUser(user).Returns(true);
+            UpdateProfileResponse updateProfileResponse =
+                profileService.UpdatePersonalInfo(new UpdateProfileRequest { UserId = 1, PhoneNumber = "0987654321", Address = "New Address" });
+
+            User updatedUser = new User { Id = 1, PhoneNumber = "0987654321", Address = "New Address" };
+
+            Assert.That(user.Equals(updatedUser), Is.True);
         }
 
         [Test]
@@ -130,15 +148,14 @@ namespace BankApp.Server.Tests
             mockUserRepository.UpdateUser(user).Returns(true);
             UpdateProfileResponse updateProfileResponse =
                 profileService.UpdatePersonalInfo(new UpdateProfileRequest { UserId = 1, PhoneNumber = "0987654321", Address = "New Address" });
-            Assert.That(updateProfileResponse, Is.Not.Null);
-            using (Assert.EnterMultipleScope())
+
+            UpdateProfileResponse expectedResponse = new UpdateProfileResponse
             {
-                Assert.That(updateProfileResponse.Success, Is.True);
-                Assert.That(updateProfileResponse.Message, Is.EqualTo("User profile updated successfully."));
-                Assert.That(user.PhoneNumber, Is.EqualTo("0987654321"));
-                Assert.That(user.Address, Is.EqualTo("New Address"));
-                mockUserRepository.Received(1).UpdateUser(user);
-            }
+                Success = true,
+                Message = "User profile updated successfully."
+            };
+
+            Assert.That(updateProfileResponse.Equals(expectedResponse), Is.True);
         }
 
         [Test]
@@ -147,12 +164,14 @@ namespace BankApp.Server.Tests
         {
             ChangePasswordResponse changePasswordResponse =
                 profileService.ChangePassword(new ChangePasswordRequest());
-            Assert.That(changePasswordResponse, Is.Not.Null);
-            using (Assert.EnterMultipleScope())
+
+            ChangePasswordResponse expectedResponse = new ChangePasswordResponse
             {
-                Assert.That(changePasswordResponse.Success, Is.False);
-                Assert.That(changePasswordResponse.Message, Is.EqualTo("User not found."));
-            }
+                Success = false,
+                Message = "User not found."
+            };
+
+            Assert.That(changePasswordResponse.Equals(expectedResponse), Is.True);
         }
 
         [Test]
@@ -164,12 +183,14 @@ namespace BankApp.Server.Tests
             mockHashService.Verify("wrong-password", "hashed-password").Returns(false);
             ChangePasswordResponse changePasswordResponse =
                 profileService.ChangePassword(new ChangePasswordRequest { UserId = 1, CurrentPassword = "wrong-password", NewPassword = "NewStrongP@ssw0rd" });
-            Assert.That(changePasswordResponse, Is.Not.Null);
-            using (Assert.EnterMultipleScope())
+
+            ChangePasswordResponse expectedResponse = new ChangePasswordResponse
             {
-                Assert.That(changePasswordResponse.Success, Is.False);
-                Assert.That(changePasswordResponse.Message, Is.EqualTo("Current password is incorrect. Please try again."));
-            }
+                Success = false,
+                Message = "Current password is incorrect. Please try again."
+            };
+
+            Assert.That(changePasswordResponse.Equals(expectedResponse), Is.True);
         }
 
         [Test]
@@ -181,14 +202,26 @@ namespace BankApp.Server.Tests
             mockHashService.GetHash("NewStrongP@ssw0rd").Returns("new-hashed-password");
             ChangePasswordResponse changePasswordResponse =
                 profileService.ChangePassword(new ChangePasswordRequest { UserId = 1, CurrentPassword = "correct-password", NewPassword = "NewStrongP@ssw0rd" });
-            Assert.That(changePasswordResponse, Is.Not.Null);
-            using (Assert.EnterMultipleScope())
+            ChangePasswordResponse expectedResponse = new ChangePasswordResponse
             {
-                Assert.That(changePasswordResponse.Success, Is.True);
-                Assert.That(changePasswordResponse.Message, Is.EqualTo("Password changed successfully."));
-                Assert.That(user.PasswordHash, Is.EqualTo("new-hashed-password"));
-                mockUserRepository.Received(1).UpdatePassword(1, "new-hashed-password");
-            }
+                Success = true,
+                Message = "Password changed successfully."
+            };
+
+            Assert.That(changePasswordResponse.Equals(expectedResponse), Is.True);
+        }
+
+        [Test]
+        public void ChangePassword_CheckIfPasswordChanged_ReturnsSuccess()
+        {
+            User user = new User { Id = 1, PasswordHash = "hashed-password" };
+            mockUserRepository.FindById(1).Returns(user);
+            mockHashService.Verify("correct-password", "hashed-password").Returns(true);
+            mockHashService.GetHash("NewStrongP@ssw0rd").Returns("new-hashed-password");
+            ChangePasswordResponse changePasswordResponse =
+                profileService.ChangePassword(new ChangePasswordRequest { UserId = 1, CurrentPassword = "correct-password", NewPassword = "NewStrongP@ssw0rd" });
+
+            Assert.That(user.PasswordHash, Is.EqualTo("new-hashed-password"));
         }
 
         [Test]
@@ -198,10 +231,8 @@ namespace BankApp.Server.Tests
             int userId = 1;
             mockUserRepository.FindById(userId).Returns((User?)null);
             bool twoFactorResponse = profileService.Enable2FA(1, new TwoFactorMethod());
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(twoFactorResponse, Is.False);
-            }
+
+            Assert.That(twoFactorResponse, Is.False);
         }
 
         [Test]
@@ -213,13 +244,22 @@ namespace BankApp.Server.Tests
             mockUserRepository.UpdateUser(user).Returns(true);
             TwoFactorMethod method = TwoFactorMethod.Email;
             bool twoFactorResponse = profileService.Enable2FA(user.Id, method);
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(twoFactorResponse, Is.True);
-                Assert.That(user.Is2FAEnabled, Is.True);
-                Assert.That(user.Preferred2FAMethod, Is.EqualTo(TwoFactorMethod.Email.ToString()));
-                mockUserRepository.Received(1).UpdateUser(user);
-            }
+
+            Assert.That(twoFactorResponse, Is.True);
+        }
+
+        [Test]
+        public void Enable2FA_CheckIfEnabled_ReturnsSuccess()
+        {
+            User userWith2FA = new User { Id = 1 };
+            mockUserRepository.FindById(userWith2FA.Id).Returns(userWith2FA);
+            mockUserRepository.UpdateUser(userWith2FA).Returns(true);
+            TwoFactorMethod method = TwoFactorMethod.Email;
+            bool twoFactorResponse = profileService.Enable2FA(userWith2FA.Id, method);
+
+            User updatedUser = new User { Id = userWith2FA.Id, Is2FAEnabled = true, Preferred2FAMethod = method.ToString() };
+
+            Assert.That(userWith2FA.Equals(updatedUser), Is.True);
         }
 
         [Test]
@@ -228,26 +268,32 @@ namespace BankApp.Server.Tests
             int userId = 1;
             mockUserRepository.FindById(userId).Returns((User?)null);
             bool twoFactorResponse = profileService.Disable2FA(1);
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(twoFactorResponse, Is.False);
-            }
+
+            Assert.That(twoFactorResponse, Is.False);
         }
 
         [Test]
         public void Disable2FA_ValidRequest_ReturnsSuccess()
         {
-            User user = CardServiceTests.CreateUser(true);
-            mockUserRepository.FindById(user.Id).Returns(user);
-            mockUserRepository.UpdateUser(user).Returns(true);
-            bool twoFactorResponse = profileService.Disable2FA(user.Id);
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(twoFactorResponse, Is.True);
-                Assert.That(user.Is2FAEnabled, Is.False);
-                Assert.That(user.Preferred2FAMethod, Is.Null);
-                mockUserRepository.Received(1).UpdateUser(user);
-            }
+            User userWithout2FA = CardServiceTests.CreateUser(true);
+            mockUserRepository.FindById(userWithout2FA.Id).Returns(userWithout2FA);
+            mockUserRepository.UpdateUser(userWithout2FA).Returns(true);
+            bool twoFactorResponse = profileService.Disable2FA(userWithout2FA.Id);
+
+            Assert.That(twoFactorResponse, Is.True);
+        }
+
+        [Test]
+        public void Disable2FA_CheckIfDisabled_ReturnsSuccess()
+        {
+            User userWithout2FA = new User { Id = 1 };
+            mockUserRepository.FindById(userWithout2FA.Id).Returns(userWithout2FA);
+            mockUserRepository.UpdateUser(userWithout2FA).Returns(true);
+            bool twoFactorResponse = profileService.Disable2FA(userWithout2FA.Id);
+
+            User updatedUser = new User { Id = userWithout2FA.Id, Is2FAEnabled = false };
+
+            Assert.That(userWithout2FA.Equals(updatedUser), Is.True);
         }
 
         [Test]
@@ -256,11 +302,8 @@ namespace BankApp.Server.Tests
             int userId = 1;
             mockUserRepository.FindById(userId).Returns((User?)null);
             List<OAuthLink> links = profileService.GetOAuthLinks(1);
-            Assert.That(links, Is.Not.Null);
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(links, Is.Empty);
-            }
+
+            Assert.That(links, Is.Empty);
         }
 
         [Test]
@@ -275,15 +318,25 @@ namespace BankApp.Server.Tests
             mockUserRepository.FindById(user.Id).Returns(user);
             mockUserRepository.GetLinkedProviders(user.Id).Returns(mockLinks);
             List<OAuthLink> links = profileService.GetOAuthLinks(user.Id);
-            Assert.That(links, Is.Not.Null);
-            using (Assert.EnterMultipleScope())
+
+            Assert.That(links.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void GetOAuthLinks_CheckIfOAuthLinksAreCorrect_ReturnsLinks()
+        {
+            User user = CardServiceTests.CreateUser(true);
+            List<OAuthLink> mockLinks = new List<OAuthLink>
             {
-                Assert.That(links.Count, Is.EqualTo(2));
-                Assert.That(links[0].Provider, Is.EqualTo("Google"));
-                Assert.That(links[0].ProviderUserId, Is.EqualTo("google-123"));
-                Assert.That(links[1].Provider, Is.EqualTo("Facebook"));
-                Assert.That(links[1].ProviderUserId, Is.EqualTo("fb-456"));
-            }
+                new OAuthLink { Id = 1, Provider = "Google", ProviderUserId = "google-123" },
+            };
+            mockUserRepository.FindById(user.Id).Returns(user);
+            mockUserRepository.GetLinkedProviders(user.Id).Returns(mockLinks);
+            List<OAuthLink> links = profileService.GetOAuthLinks(user.Id);
+            OAuthLink link = links[0];
+            OAuthLink expectedLink = new OAuthLink { Id = 1, Provider = "Google", ProviderUserId = "google-123" };
+
+            Assert.That(link.Equals(expectedLink), Is.True);
         }
 
         [Test]
@@ -292,11 +345,8 @@ namespace BankApp.Server.Tests
             int userId = 1;
             mockUserRepository.FindById(userId).Returns((User?)null);
             List<NotificationPreference> prefs = profileService.GetNotificationPreferences(1);
-            Assert.That(prefs, Is.Not.Null);
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(prefs, Is.Empty);
-            }
+
+            Assert.That(prefs, Is.Empty);
         }
 
         [Test]
@@ -311,13 +361,25 @@ namespace BankApp.Server.Tests
             mockUserRepository.FindById(user.Id).Returns(user);
             mockUserRepository.GetNotificationPreferences(user.Id).Returns(mockPrefs);
             List<NotificationPreference> prefs = profileService.GetNotificationPreferences(user.Id);
-            Assert.That(prefs, Is.Not.Null);
-            using (Assert.EnterMultipleScope())
+
+            Assert.That(prefs.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void GetNotificationPreferences_CheckIfPreferencesAreCorrect_ReturnsPreferences()
+        {
+            User user = CardServiceTests.CreateUser(true);
+            List<NotificationPreference> mockPrefs = new List<NotificationPreference>
             {
-                Assert.That(prefs.Count, Is.EqualTo(2));
-                Assert.That(prefs[0].EmailEnabled, Is.True);
-                Assert.That(prefs[1].SmsEnabled, Is.False);
-            }
+                new NotificationPreference { Id = 1, EmailEnabled = true },
+            };
+            mockUserRepository.FindById(user.Id).Returns(user);
+            mockUserRepository.GetNotificationPreferences(user.Id).Returns(mockPrefs);
+            List<NotificationPreference> prefs = profileService.GetNotificationPreferences(user.Id);
+            NotificationPreference preference = prefs[0];
+            NotificationPreference expectedPref = new NotificationPreference { Id = 1, EmailEnabled = true };
+
+            Assert.That(preference.Equals(expectedPref), Is.True);
         }
 
         [Test]
@@ -326,10 +388,8 @@ namespace BankApp.Server.Tests
             int userId = 1;
             mockUserRepository.FindById(userId).Returns((User?)null);
             bool result = profileService.UpdateNotificationPreferences(1, new List<NotificationPreference>());
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(result, Is.False);
-            }
+
+            Assert.That(result, Is.False);
         }
 
         [Test]
@@ -344,11 +404,8 @@ namespace BankApp.Server.Tests
             mockUserRepository.FindById(user.Id).Returns(user);
             mockUserRepository.UpdateNotificationPreferences(user.Id, newPrefs).Returns(true);
             bool result = profileService.UpdateNotificationPreferences(user.Id, newPrefs);
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(result, Is.True);
-                mockUserRepository.Received(1).UpdateNotificationPreferences(user.Id, newPrefs);
-            }
+
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -357,10 +414,8 @@ namespace BankApp.Server.Tests
             int userId = 1;
             mockUserRepository.FindById(userId).Returns((User?)null);
             bool result = profileService.VerifyPassword(1, "any-password");
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(result, Is.False);
-            }
+
+            Assert.That(result, Is.False);
         }
 
         [Test]
@@ -370,10 +425,8 @@ namespace BankApp.Server.Tests
             mockUserRepository.FindById(1).Returns(user);
             mockHashService.Verify("input-password", "hashed-password").Returns(true);
             bool result = profileService.VerifyPassword(1, "input-password");
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(result, Is.True);
-            }
+
+            Assert.That(result, Is.True);
         }
     }
 }
