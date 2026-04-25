@@ -2,12 +2,13 @@
 using BankApp.Server.Services.Implementations;
 using BankApp.Server.Services.Infrastructure.Interfaces;
 using Moq;
-using Xunit;
+using NUnit.Framework;
 using BankApp.Models.DTOs.Auth;
 using BankApp.Models.Entities;
 
 namespace BankApp.Server.Tests
 {
+    [TestFixture]
     public class AuthServiceTests
     {
         private static AuthService CreateService(
@@ -24,6 +25,7 @@ namespace BankApp.Server.Tests
             otpServiceMock.Object,
             emailServiceMock.Object);
         }
+
         private static User CreateUser(bool isTwoFactorEnabled = false, bool isLocked = false, int failedLoginAttempts = 0)
         {
             return new User
@@ -38,14 +40,15 @@ namespace BankApp.Server.Tests
                 Preferred2FAMethod = "email"
             };
         }
-        [Fact]
+
+        [Test]
         public void LoginFailInvalidFormat()
         {
-            Mock<IAuthRepository> authRepoMock = new ();
-            Mock<IHashService> hashMock = new ();
-            Mock<IJWTService> jwtMock = new ();
-            Mock<IOTPService> otpMock = new ();
-            Mock<IEmailService> emailMock = new ();
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
 
             AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
 
@@ -57,19 +60,19 @@ namespace BankApp.Server.Tests
 
             LoginResponse response = service.Login(request);
 
-            Assert.False(response.Success);
-            Assert.Equal("Invalid mail format.", response.Error);
+            Assert.That(response.Success, Is.False);
+            Assert.That(response.Error, Is.EqualTo("Invalid mail format."));
             authRepoMock.Verify(repo => repo.FindUserByEmail(It.IsAny<string>()), Times.Never);
         }
 
-        [Fact]
+        [Test]
         public void LoginFailUserNotFound()
         {
-            Mock<IAuthRepository> authRepoMock = new ();
-            Mock<IHashService> hashMock = new ();
-            Mock<IJWTService> jwtMock = new ();
-            Mock<IOTPService> otpMock = new ();
-            Mock<IEmailService> emailMock = new ();
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
 
             AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
 
@@ -81,17 +84,18 @@ namespace BankApp.Server.Tests
 
             LoginResponse response = service.Login(request);
 
-            Assert.False(response.Success);
-            Assert.Equal("Invalid email or password.", response.Error);
+            Assert.That(response.Success, Is.False);
+            Assert.That(response.Error, Is.EqualTo("Invalid email or password."));
         }
-        [Fact]
+
+        [Test]
         public void LoginFailAndIncrementsFailedAttemptsWhenPasswordIncorrect()
         {
-            Mock<IAuthRepository> authRepoMock = new ();
-            Mock<IHashService> hashMock = new ();
-            Mock<IJWTService> jwtMock = new ();
-            Mock<IOTPService> otpMock = new ();
-            Mock<IEmailService> emailMock = new ();
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
             User user = CreateUser(failedLoginAttempts: 0);
 
             authRepoMock.Setup(repo => repo.FindUserByEmail(user.Email)).Returns(user);
@@ -107,18 +111,19 @@ namespace BankApp.Server.Tests
 
             LoginResponse response = service.Login(request);
 
-            Assert.False(response.Success);
-            Assert.Equal("Invalid email or password.", response.Error);
+            Assert.That(response.Success, Is.False);
+            Assert.That(response.Error, Is.EqualTo("Invalid email or password."));
             authRepoMock.Verify(repo => repo.IncrementFailedAttempts(user.Id), Times.Once);
         }
-        [Fact]
+
+        [Test]
         public void LoginLocksAccountWhenMaxFailedAttempts()
         {
-            Mock<IAuthRepository> authRepoMock = new ();
-            Mock<IHashService> hashMock = new ();
-            Mock<IJWTService> jwtMock = new ();
-            Mock<IOTPService> otpMock = new ();
-            Mock<IEmailService> emailMock = new ();
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
             User user = CreateUser(failedLoginAttempts: 4);
 
             authRepoMock.Setup(repo => repo.FindUserByEmail(user.Email)).Returns(user);
@@ -134,160 +139,161 @@ namespace BankApp.Server.Tests
 
             LoginResponse response = service.Login(request);
 
-            Assert.False(response.Success);
-            Assert.Equal("Account locked due to too many failed attempts.", response.Error);
+            Assert.That(response.Success, Is.False);
+            Assert.That(response.Error, Is.EqualTo("Account locked due to too many failed attempts."));
             authRepoMock.Verify(repo => repo.LockAccount(user.Id, It.IsAny<DateTime>()), Times.Once);
             emailMock.Verify(email => email.SendLockNotification(user.Email), Times.Once);
         }
 
-            [Fact]
-            public void LoginSuccessAndTokenWhenLoginIsCorrectAndNo2FA()
+        [Test]
+        public void LoginSuccessAndTokenWhenLoginIsCorrectAndNo2FA()
+        {
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
+            User user = CreateUser(isTwoFactorEnabled: false);
+            string expectedToken = "fake-jwt-token";
+
+            authRepoMock.Setup(repo => repo.FindUserByEmail(user.Email)).Returns(user);
+            hashMock.Setup(hash => hash.Verify("correctPassword", user.PasswordHash)).Returns(true);
+            jwtMock.Setup(jwt => jwt.GenerateToken(user.Id)).Returns(expectedToken);
+
+            AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
+
+            LoginRequest request = new LoginRequest
             {
-                Mock<IAuthRepository> authRepoMock = new ();
-                Mock<IHashService> hashMock = new ();
-                Mock<IJWTService> jwtMock = new ();
-                Mock<IOTPService> otpMock = new ();
-                Mock<IEmailService> emailMock = new ();
-                User user = CreateUser(isTwoFactorEnabled: false);
-                string expectedToken = "fake-jwt-token";
+                Email = user.Email,
+                Password = "correctPassword"
+            };
+            LoginResponse response = service.Login(request);
 
-                authRepoMock.Setup(repo => repo.FindUserByEmail(user.Email)).Returns(user);
-                hashMock.Setup(hash => hash.Verify("correctPassword", user.PasswordHash)).Returns(true);
-                jwtMock.Setup(jwt => jwt.GenerateToken(user.Id)).Returns(expectedToken);
+            Assert.That(response.Success, Is.True);
+            Assert.That(response.Token, Is.EqualTo(expectedToken));
+            Assert.That(response.Requires2FA, Is.False);
+            Assert.That(response.UserId, Is.EqualTo(user.Id));
+            authRepoMock.Verify(repo => repo.ResetFailedAttempts(user.Id), Times.Once);
+            authRepoMock.Verify(repo => repo.CreateSession(user.Id, expectedToken, null, null, null), Times.Once);
+            emailMock.Verify(email => email.SendLoginAlert(user.Email), Times.Once);
+        }
 
-                AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
+        [Test]
+        public void LoginRequires2FAWhenLoginIsCorrectAnd2FAEnabled()
+        {
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
+            User user = CreateUser(isTwoFactorEnabled: true);
+            string expectedOtp = "123456";
 
-                LoginRequest request = new LoginRequest
-                {
-                    Email = user.Email,
-                    Password = "correctPassword"
-                };
-                LoginResponse response = service.Login(request);
+            authRepoMock.Setup(repo => repo.FindUserByEmail(user.Email)).Returns(user);
+            hashMock.Setup(hash => hash.Verify("correctPassword", user.PasswordHash)).Returns(true);
+            otpMock.Setup(otp => otp.GenerateTOTP(user.Id)).Returns(expectedOtp);
 
-                Assert.True(response.Success);
-                Assert.Equal(expectedToken, response.Token);
-                Assert.False(response.Requires2FA);
-                Assert.Equal(user.Id, response.UserId);
-                authRepoMock.Verify(repo => repo.ResetFailedAttempts(user.Id), Times.Once);
-                authRepoMock.Verify(repo => repo.CreateSession(user.Id, expectedToken, null, null, null), Times.Once);
-                emailMock.Verify(email => email.SendLoginAlert(user.Email), Times.Once);
-            }
+            AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
 
-            [Fact]
-            public void LoginRequires2FAWhenLoginIsCorrectAnd2FAEnabled()
+            LoginRequest request = new LoginRequest
             {
-                Mock<IAuthRepository> authRepoMock = new ();
-                Mock<IHashService> hashMock = new ();
-                Mock<IJWTService> jwtMock = new ();
-                Mock<IOTPService> otpMock = new ();
-                Mock<IEmailService> emailMock = new ();
-                User user = CreateUser(isTwoFactorEnabled: true);
-                string expectedOtp = "123456";
+                Email = user.Email,
+                Password = "correctPassword"
+            };
+            LoginResponse response = service.Login(request);
 
-                authRepoMock.Setup(repo => repo.FindUserByEmail(user.Email)).Returns(user);
-                hashMock.Setup(hash => hash.Verify("correctPassword", user.PasswordHash)).Returns(true);
-                otpMock.Setup(otp => otp.GenerateTOTP(user.Id)).Returns(expectedOtp);
+            Assert.That(response.Success, Is.True);
+            Assert.That(response.Requires2FA, Is.True);
+            Assert.That(response.Token, Is.Null);
+            Assert.That(response.UserId, Is.EqualTo(user.Id));
+            emailMock.Verify(email => email.SendOTPCode(user.Email, expectedOtp), Times.Once);
+        }
 
-                AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
+        [Test]
+        public void VerifyOTPReturnsSuccessAndTokenWhenOTPIsValid()
+        {
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
+            User user = CreateUser();
+            string expectedToken = "fake-jwt-token";
 
-                LoginRequest request = new LoginRequest
-                {
-                    Email = user.Email,
-                    Password = "correctPassword"
-                };
-                LoginResponse response = service.Login(request);
+            authRepoMock.Setup(repo => repo.FindUserById(user.Id)).Returns(user);
+            otpMock.Setup(otp => otp.VerifyTOTP(user.Id, "123456")).Returns(true);
+            jwtMock.Setup(jwt => jwt.GenerateToken(user.Id)).Returns(expectedToken);
 
-                Assert.True(response.Success);
-                Assert.True(response.Requires2FA);
-                Assert.Null(response.Token);
-                Assert.Equal(user.Id, response.UserId);
-                emailMock.Verify(email => email.SendOTPCode(user.Email, expectedOtp), Times.Once);
-            }
+            AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
 
-            [Fact]
-            public void VerifyOTPReturnsSuccessAndTokenWhenOTPIsValid()
+            VerifyOTPRequest request = new VerifyOTPRequest
             {
-                Mock<IAuthRepository> authRepoMock = new ();
-                Mock<IHashService> hashMock = new ();
-                Mock<IJWTService> jwtMock = new ();
-                Mock<IOTPService> otpMock = new ();
-                Mock<IEmailService> emailMock = new ();
-                User user = CreateUser();
-                string expectedToken = "fake-jwt-token";
+                UserId = user.Id,
+                OTPCode = "123456"
+            };
 
-                authRepoMock.Setup(repo => repo.FindUserById(user.Id)).Returns(user);
-                otpMock.Setup(otp => otp.VerifyTOTP(user.Id, "123456")).Returns(true);
-                jwtMock.Setup(jwt => jwt.GenerateToken(user.Id)).Returns(expectedToken);
+            LoginResponse response = service.VerifyOTP(request);
 
-                AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
+            Assert.That(response.Success, Is.True);
+            Assert.That(response.Token, Is.EqualTo(expectedToken));
+            otpMock.Verify(otp => otp.InvalidateOTP(user.Id), Times.Once);
+            authRepoMock.Verify(repo => repo.CreateSession(user.Id, expectedToken, null, null, null), Times.Once);
+        }
 
-                VerifyOTPRequest request = new VerifyOTPRequest
-                {
-                    UserId = user.Id,
-                    OTPCode = "123456"
-                };
+        [Test]
+        public void RegisterSuccessWhenDataValid()
+        {
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
+            authRepoMock.Setup(repo => repo.CreateUser(It.IsAny<User>())).Returns(true);
+            hashMock.Setup(hash => hash.GetHash(It.IsAny<string>())).Returns("hashedPassword");
 
-                LoginResponse response = service.VerifyOTP(request);
+            AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
 
-                Assert.True(response.Success);
-                Assert.Equal(expectedToken, response.Token);
-                otpMock.Verify(otp => otp.InvalidateOTP(user.Id), Times.Once);
-                authRepoMock.Verify(repo => repo.CreateSession(user.Id, expectedToken, null, null, null), Times.Once);
-            }
-
-            [Fact]
-            public void RegisterSuccessWhenDataValid()
+            RegisterRequest request = new RegisterRequest
             {
-                Mock<IAuthRepository> authRepoMock = new ();
-                Mock<IHashService> hashMock = new ();
-                Mock<IJWTService> jwtMock = new ();
-                Mock<IOTPService> otpMock = new ();
-                Mock<IEmailService> emailMock = new ();
-                authRepoMock.Setup(repo => repo.CreateUser(It.IsAny<User>())).Returns(true);
-                hashMock.Setup(hash => hash.GetHash(It.IsAny<string>())).Returns("hashedPassword");
+                Email = "newuser@test.com",
+                Password = "ValidPassword123!",
+                FullName = "New User"
+            };
 
-                AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
+            RegisterResponse response = service.Register(request);
 
-                RegisterRequest request = new RegisterRequest
-                {
-                    Email = "newuser@test.com",
-                    Password = "ValidPassword123!",
-                    FullName = "New User"
-                };
+            Assert.That(response.Success, Is.True);
+            Assert.That(response.Error, Is.Null);
+            authRepoMock.Verify(repo => repo.CreateUser(It.IsAny<User>()), Times.Once);
+        }
 
-                RegisterResponse response = service.Register(request);
+        [Test]
+        public void LogoutReturnsTrueWhenSessionExists()
+        {
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
+            Session session = new Session { Id = 1, UserId = 1, Token = "valid-token" };
+            authRepoMock.Setup(repo => repo.FindSessionByToken("valid-token")).Returns(session);
 
-                Assert.True(response.Success);
-                Assert.Null(response.Error);
-                authRepoMock.Verify(repo => repo.CreateUser(It.IsAny<User>()), Times.Once);
-            }
+            AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
 
-            [Fact]
-            public void LogoutReturnsTrueWhenSessionExists()
-            {
-                Mock<IAuthRepository> authRepoMock = new ();
-                Mock<IHashService> hashMock = new ();
-                Mock<IJWTService> jwtMock = new ();
-                Mock<IOTPService> otpMock = new ();
-                Mock<IEmailService> emailMock = new ();
-                Session session = new Session { Id = 1, UserId = 1, Token = "valid-token" };
-                authRepoMock.Setup(repo => repo.FindSessionByToken("valid-token")).Returns(session);
+            bool result = service.Logout("valid-token");
 
-                AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
+            Assert.That(result, Is.True);
+            authRepoMock.Verify(repo => repo.UpdateSessionToken(session.Id), Times.Once);
+        }
 
-                bool result = service.Logout("valid-token");
-
-                Assert.True(result);
-                authRepoMock.Verify(repo => repo.UpdateSessionToken(session.Id), Times.Once);
-            }
-        [Fact]
+        [Test]
         public void RegisterErrorWhenEmailIsInvalid()
         {
-            Mock<IAuthRepository> authRepoMock = new ();
-            Mock<IHashService> hashMock = new ();
-            Mock<IJWTService> jwtMock = new ();
-            Mock<IOTPService> otpMock = new ();
-            Mock<IEmailService> emailMock = new ();
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
             AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
 
             RegisterRequest request = new RegisterRequest
@@ -299,19 +305,19 @@ namespace BankApp.Server.Tests
 
             RegisterResponse response = service.Register(request);
 
-            Assert.False(response.Success);
-            Assert.Equal("Invalid email format.", response.Error);
+            Assert.That(response.Success, Is.False);
+            Assert.That(response.Error, Is.EqualTo("Invalid email format."));
             authRepoMock.Verify(repo => repo.FindUserByEmail(It.IsAny<string>()), Times.Never);
         }
 
-        [Fact]
+        [Test]
         public void RegisterErrorWhenPasswordIsWeak()
         {
-            Mock<IAuthRepository> authRepoMock = new ();
-            Mock<IHashService> hashMock = new ();
-            Mock<IJWTService> jwtMock = new ();
-            Mock<IOTPService> otpMock = new ();
-            Mock<IEmailService> emailMock = new ();
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
             AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
 
             RegisterRequest request = new RegisterRequest
@@ -323,19 +329,19 @@ namespace BankApp.Server.Tests
 
             RegisterResponse response = service.Register(request);
 
-            Assert.False(response.Success);
-            Assert.Equal("Password must be at least 8 characters with uppercase, lowercase, and a digit.", response.Error);
+            Assert.That(response.Success, Is.False);
+            Assert.That(response.Error, Is.EqualTo("Password must be at least 8 characters with uppercase, lowercase, and a digit."));
             authRepoMock.Verify(repo => repo.FindUserByEmail(It.IsAny<string>()), Times.Never);
         }
 
-        [Fact]
+        [Test]
         public void RegisterErrorWhenFullNameMissing()
         {
-            Mock<IAuthRepository> authRepoMock = new ();
-            Mock<IHashService> hashMock = new ();
-            Mock<IJWTService> jwtMock = new ();
-            Mock<IOTPService> otpMock = new ();
-            Mock<IEmailService> emailMock = new ();
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
             AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
 
             RegisterRequest request = new RegisterRequest
@@ -347,19 +353,19 @@ namespace BankApp.Server.Tests
 
             RegisterResponse response = service.Register(request);
 
-            Assert.False(response.Success);
-            Assert.Equal("Full name is required.", response.Error);
+            Assert.That(response.Success, Is.False);
+            Assert.That(response.Error, Is.EqualTo("Full name is required."));
             authRepoMock.Verify(repo => repo.FindUserByEmail(It.IsAny<string>()), Times.Never);
         }
 
-        [Fact]
+        [Test]
         public void RegisterErrorWhenEmailAlreadyRegistered()
         {
-            Mock<IAuthRepository> authRepoMock = new ();
-            Mock<IHashService> hashMock = new ();
-            Mock<IJWTService> jwtMock = new ();
-            Mock<IOTPService> otpMock = new ();
-            Mock<IEmailService> emailMock = new ();
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
             User existingUser = CreateUser();
 
             authRepoMock.Setup(repo => repo.FindUserByEmail(existingUser.Email)).Returns(existingUser);
@@ -375,19 +381,19 @@ namespace BankApp.Server.Tests
 
             RegisterResponse response = service.Register(request);
 
-            Assert.False(response.Success);
-            Assert.Equal("Email is already registered.", response.Error);
+            Assert.That(response.Success, Is.False);
+            Assert.That(response.Error, Is.EqualTo("Email is already registered."));
             authRepoMock.Verify(repo => repo.CreateUser(It.IsAny<User>()), Times.Never);
         }
 
-        [Fact]
+        [Test]
         public void RegisterErrorWhenDatabaseCreationFails()
         {
-            Mock<IAuthRepository> authRepoMock = new ();
-            Mock<IHashService> hashMock = new ();
-            Mock<IJWTService> jwtMock = new ();
-            Mock<IOTPService> otpMock = new ();
-            Mock<IEmailService> emailMock = new ();
+            Mock<IAuthRepository> authRepoMock = new Mock<IAuthRepository>();
+            Mock<IHashService> hashMock = new Mock<IHashService>();
+            Mock<IJWTService> jwtMock = new Mock<IJWTService>();
+            Mock<IOTPService> otpMock = new Mock<IOTPService>();
+            Mock<IEmailService> emailMock = new Mock<IEmailService>();
             authRepoMock.Setup(repo => repo.CreateUser(It.IsAny<User>())).Returns(false);
 
             AuthService service = CreateService(authRepoMock, hashMock, jwtMock, otpMock, emailMock);
@@ -401,8 +407,8 @@ namespace BankApp.Server.Tests
 
             RegisterResponse response = service.Register(request);
 
-            Assert.False(response.Success);
-            Assert.Equal("Failed to create account.", response.Error);
+            Assert.That(response.Success, Is.False);
+            Assert.That(response.Error, Is.EqualTo("Failed to create account."));
         }
     }
-    }
+}
